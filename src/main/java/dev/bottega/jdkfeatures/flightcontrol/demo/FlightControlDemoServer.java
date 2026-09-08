@@ -2,10 +2,13 @@ package dev.bottega.jdkfeatures.flightcontrol.demo;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import dev.bottega.jdkfeatures.flightcontrol.step02.Aircraft;
 import dev.bottega.jdkfeatures.flightcontrol.step02.Airspace;
 import dev.bottega.jdkfeatures.flightcontrol.step02.Area;
 import dev.bottega.jdkfeatures.flightcontrol.step02.Circle;
+import dev.bottega.jdkfeatures.flightcontrol.step02.Point;
 import dev.bottega.jdkfeatures.flightcontrol.step02.Polygon;
+import dev.bottega.jdkfeatures.flightcontrol.step02.Velocity;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,9 +37,13 @@ public final class FlightControlDemoServer {
 
     private FlightControlDemoServer(int port) throws IOException {
         this.airspace = Airspace.sample();
-        // Advance the simulation so auto-refresh shows the aircraft moving.
-        // (Simple linear move; the "sensible" course/speed change is the participant's step-02 task.)
-        scheduler.scheduleAtFixedRate(() -> airspace = airspace.step(), 0, 1, TimeUnit.SECONDS);
+        // Bounce region: areas + initial aircraft + margin. Aircraft stay inside this fixed
+        // window, so with a stable view the areas never move and only points move.
+        Bounds b = bounds();
+        this.minX = b.minX - 2; this.maxX = b.maxX + 2;
+        this.minY = b.minY - 2; this.maxY = b.maxY + 2;
+        // Advance the simulation so auto-refresh shows the aircraft moving (bouncing in-region).
+        scheduler.scheduleAtFixedRate(() -> airspace = advance(airspace), 0, 1, TimeUnit.SECONDS);
 
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
         server.createContext("/aircraft", ex -> json(ex, aircraftJson(airspace)));
@@ -56,6 +63,49 @@ public final class FlightControlDemoServer {
     public void stop() {
         scheduler.shutdownNow();
         server.stop(0);
+    }
+
+    // ---- simulation advance with in-region bounce (demo only) ----
+    private double minX, maxX, minY, maxY;
+
+    private record Bounds(double minX, double maxX, double minY, double maxY) {}
+
+    private Bounds bounds() {
+        double minX = Double.POSITIVE_INFINITY, maxX = Double.NEGATIVE_INFINITY;
+        double minY = Double.POSITIVE_INFINITY, maxY = Double.NEGATIVE_INFINITY;
+        for (Area a : airspace.areas()) {
+            switch (a) {
+                case Circle c -> {
+                    minX = Math.min(minX, c.center().x() - c.radius()); maxX = Math.max(maxX, c.center().x() + c.radius());
+                    minY = Math.min(minY, c.center().y() - c.radius()); maxY = Math.max(maxY, c.center().y() + c.radius());
+                }
+                case Polygon p -> {
+                    for (Point v : p.vertices()) {
+                        minX = Math.min(minX, v.x()); maxX = Math.max(maxX, v.x());
+                        minY = Math.min(minY, v.y()); maxY = Math.max(maxY, v.y());
+                    }
+                }
+            }
+        }
+        for (Aircraft ac : airspace.aircraft()) {
+            minX = Math.min(minX, ac.pos().x()); maxX = Math.max(maxX, ac.pos().x());
+            minY = Math.min(minY, ac.pos().y()); maxY = Math.max(maxY, ac.pos().y());
+        }
+        return new Bounds(minX, maxX, minY, maxY);
+    }
+
+    private Airspace advance(Airspace as) {
+        Airspace next = as.step();
+        var bounced = next.aircraft().stream().map(this::bounce).toList();
+        return new Airspace(bounced, next.areas());
+    }
+
+    private Aircraft bounce(Aircraft a) {
+        double x = a.pos().x(), y = a.pos().y();
+        double dx = a.vel().dx(), dy = a.vel().dy();
+        if (x < minX || x > maxX) dx = -dx;
+        if (y < minY || y > maxY) dy = -dy;
+        return new Aircraft(a.id(), a.label(), a.callsign(), new Point(x, y), new Velocity(dx, dy));
     }
 
     // ---- JSON building (matches the viewer contract) ----

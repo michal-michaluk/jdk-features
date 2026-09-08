@@ -1,0 +1,18 @@
+- generic [active] [ref=e1]:
+  - heading "Flight Control" [level=1] [ref=e2]
+  - generic [ref=e3]:
+    - button "Refresh" [ref=e4]
+    - generic [ref=e5]:
+      - checkbox "Auto-refresh (2s)" [checked] [ref=e6]
+      - text: Auto-refresh (2s)
+    - generic [ref=e7]:
+      - text: Reads
+      - code [ref=e8]: GET /aircraft
+      - text: +
+      - code [ref=e9]: GET /areas
+      - text: (same origin). Serve this file from your local server; the scene re-polls automatically or manually.
+  - img [ref=e10]:
+    - generic [ref=e13]: CTR
+    - generic [ref=e15]: TMA
+    - generic [ref=e17]: FOX FOX123
+    - generic [ref=e19]: ECHO ECHO456

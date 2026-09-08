@@ -80,15 +80,18 @@
       if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
     }
 
-    // Collect every point we need to fit, then build a scale/translate that centers the scene.
+    // Fit the world once (areas + aircraft) and KEEP the transform: because areas never
+    // change and we never re-fit, the areas stay put on screen and only aircraft move (the
+    // demo server bounces aircraft so they stay inside the fitted window).
+    let fitted = false;
     function fit(aircraft, areas) {
       const xs = [], ys = [];
       const push = (x, y) => { xs.push(x); ys.push(y); };
-      (aircraft || []).forEach(a => { push(a.pos.x, a.pos.y); push(a.pos.x + a.vel.dx, a.pos.y + a.vel.dy); });
       (areas || []).forEach(a => {
         if (a.kind === 'circle') { push(a.center.x - a.radius, a.center.y - a.radius); push(a.center.x + a.radius, a.center.y + a.radius); }
         else (a.vertices || []).forEach(v => push(v.x, v.y));
       });
+      (aircraft || []).forEach(a => { push(a.pos.x, a.pos.y); push(a.pos.x + a.vel.dx, a.pos.y + a.vel.dy); });
       if (!xs.length) { xs.push(0, 10); ys.push(0, 10); }
       let minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
       const spanX = Math.max(maxX - minX, 1e-6), spanY = Math.max(maxY - minY, 1e-6);
@@ -99,7 +102,7 @@
 
     function draw(aircraft, areas) {
       svg.innerHTML = '';
-      fit(aircraft, areas);
+      if (!fitted) { fit(aircraft, areas); fitted = true; }
       svg.appendChild(svgEl('rect', { x: 0, y: 0, width: W, height: H, fill: '#f6f8fa', stroke: '#ccc' }));
       (areas || []).forEach(a => drawArea(a));
       (aircraft || []).forEach(a => drawAircraft(a));

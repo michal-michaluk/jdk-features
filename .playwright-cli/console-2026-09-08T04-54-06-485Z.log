@@ -1,0 +1,6 @@
+[  220142ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:50004/aircraft:0
+[  220142ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:50004/areas:0
+[  222140ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:50004/aircraft:0
+[  222140ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:50004/areas:0
+[  224140ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:50004/aircraft:0
+[  224140ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:50004/areas:0
