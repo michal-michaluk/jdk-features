@@ -36,14 +36,14 @@ Przykład akceptacji (wygeneruj po swojemu i zweryfikuj testem):
 - **Determinizm:** ten sam `seed` ⇒ identyczna trajektoria po N krokach.
 - **Granice:** wektor nigdy nie zmienia się o więcej niż `maxTurnDeg` / `maxSpeedDelta`.
 - **Immutability:** `step()` nie modyfikuje poprzedniego stanu.
-- **Sens:** po wielu krokach samolot nie „ucieka" w nieskończoność — ruch jest ograniczony.
+- **Sens:** po wielu krokach samolot nie „ucieka” w nieskończoność — ruch jest ograniczony.
 
 ## Wskazówki
 - Kurs → współrzędne: przelicz kąt na `dx = cos(θ)`, `dy = sin(θ)` (pamiętaj o
   konwersji stopnie↔radiany).
 - Prędkość = długość wektora `(dx,dy)`; zmień długość, zachowując kierunek, potem obróć.
 - Wybieraj z generatora kolejne liczby (np. `nextDouble`) — kolejność determinuje trajektorię.
-- Do sprawdzenia „nie ucieka": ogranicz wektor do sensownego zakresu (mały `maxSpeedΔ`
+- Do sprawdzenia „nie ucieka”: ogranicz wektor do sensownego zakresu (mały `maxSpeedDelta`
   przy stałym `maxTurnDeg` trzyma samolot w polu).
 - **API:** `RandomGenerator` ma `nextDouble(origin, bound)`; `RandomGeneratorFactory.all()`
   wylicza dostępne algorytmy.
