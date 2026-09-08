@@ -6,8 +6,10 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.SequencedMap;
 import java.util.SequencedSet;
+import java.util.random.RandomGenerator;
 
 /**
  * Holds aircraft + areas, advances every aircraft by its velocity (headless, no UI),
@@ -30,15 +32,22 @@ public final class Airspace {
 
     private final List<Aircraft> aircraft;
     private final List<Area> areas;
+    private final RandomMovement movement;
+    private final RandomGenerator rng;
 
-    /**
-     * Builds an airspace from the given aircraft and areas. Both lists are defensively copied
-     * with `List.copyOf`, so mutating the caller's lists afterwards does not affect this
-     * aggregate, and the copy is unmodifiable.
-     */
     public Airspace(List<Aircraft> aircraft, List<Area> areas) {
+        this(aircraft, areas, RandomMovementFactory.defaults());
+    }
+
+    public Airspace(List<Aircraft> aircraft, List<Area> areas, RandomMovement movement) {
+        this(aircraft, areas, movement, movement.generator());
+    }
+
+    private Airspace(List<Aircraft> aircraft, List<Area> areas, RandomMovement movement, RandomGenerator rng) {
         this.aircraft = List.copyOf(aircraft);
         this.areas = List.copyOf(areas);
+        this.movement = Objects.requireNonNull(movement);
+        this.rng = Objects.requireNonNull(rng);
     }
 
     /** The aircraft of this airspace, as an unmodifiable list (the internal defensive copy). */
@@ -51,22 +60,15 @@ public final class Airspace {
         return areas;
     }
 
-    /**
-     * Advances every aircraft by its velocity and returns a **new** `Airspace`; the receiver
-     * is unchanged (immutability).
-     *
-     * ```text
-     * (x, y) -> (x + dx, y + dy)  applied to each aircraft's pos, keeping its vel
-     * ```
-     *
-     * Aircraft are moved independently; the static `areas` list is carried over unchanged.
-     */
+    public RandomMovement movement() {
+        return movement;
+    }
+
     public Airspace step() {
         List<Aircraft> moved = aircraft.stream()
-                .map(ac -> ac.withPosition(new Point(ac.pos().x() + ac.vel().dx(),
-                        ac.pos().y() + ac.vel().dy())))
+                .map(ac -> ac.withVelocity(movement.apply(ac.vel(), rng)).move())
                 .toList();
-        return new Airspace(moved, areas);
+        return new Airspace(moved, areas, movement, rng);
     }
 
     /**

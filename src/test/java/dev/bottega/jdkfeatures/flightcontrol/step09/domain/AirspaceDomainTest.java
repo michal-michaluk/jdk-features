@@ -11,6 +11,7 @@ import java.util.SequencedSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,13 +38,66 @@ class AirspaceDomainTest {
     }
 
     @Test
-    void stepAdvancesEveryAircraftByItsVelocity() {
+    void stepIsDeterministicFromSeed() {
+        Airspace a = Airspace.sample();
+        Airspace b = Airspace.sample();
+        for (int i = 0; i < 6; i++) {
+            a = a.step();
+            b = b.step();
+        }
+        assertEquals(a.aircraft(), b.aircraft());
+    }
+
+    @Test
+    void stepBoundsCourseTurnAndSpeedDelta() {
         Airspace next = airspace.step();
-        assertEquals(new Point(11, 0), next.aircraft().get(0).pos());
-        assertEquals(new Point(0, 6), next.aircraft().get(1).pos());
-        // original is unchanged (immutability)
+        Aircraft before = airspace.aircraft().get(0);
+        Aircraft after = next.aircraft().get(0);
+        double maxTurn = airspace.movement().maxTurnDeg();
+        double maxDelta = airspace.movement().maxSpeedDelta();
+
+        double delta = Math.hypot(after.vel().dx(), after.vel().dy())
+                - Math.hypot(before.vel().dx(), before.vel().dy());
+        assertTrue(Math.abs(delta) <= maxDelta, "speed delta " + delta + " > " + maxDelta);
+
+        double h0 = Math.atan2(before.vel().dy(), before.vel().dx());
+        double h1 = Math.atan2(after.vel().dy(), after.vel().dx());
+        double turn = Math.toDegrees(Math.abs(h1 - h0));
+        assertTrue(turn <= maxTurn, "turn " + turn + " > " + maxTurn);
+    }
+
+    @Test
+    void stepMovesAircraftAndLeavesOriginalUnchanged() {
+        Airspace next = airspace.step();
+        assertNotEquals(airspace.aircraft().get(0).pos(), next.aircraft().get(0).pos());
+        assertNotEquals(airspace.aircraft().get(1).pos(), next.aircraft().get(1).pos());
         assertEquals(new Point(10, 0), airspace.aircraft().get(0).pos());
         assertEquals(new Point(0, 5), airspace.aircraft().get(1).pos());
+    }
+
+    @Test
+    void pointMoveAndAircraftMove() {
+        assertEquals(new Point(11, 0), new Point(10, 0).move(new Velocity(1, 0)));
+        Aircraft a = new Aircraft("a1", "FOX", "FOX123", new Point(10, 0), new Velocity(1, 0));
+        assertEquals(new Point(11, 0), a.move().pos());
+        assertEquals(new Point(10, 0), a.pos());
+    }
+
+    @Test
+    void randomMovementIsAValueObject() {
+        RandomMovement m1 = RandomMovementFactory.of(5, 2);
+        RandomMovement m2 = RandomMovementFactory.of(5, 2);
+        assertEquals(m1, m2);
+        assertEquals(m1.hashCode(), m2.hashCode());
+        assertEquals(5, m1.maxTurnDeg());
+        assertEquals(2, m1.maxSpeedDelta());
+        assertEquals(m1.generator().nextDouble(), m2.generator().nextDouble());
+        assertTrue(m1.equals(m1));
+        assertFalse(m1.equals(null));
+        assertFalse(m1.equals("x"));
+        assertFalse(m1.equals(RandomMovementFactory.of(6, 2)));
+        assertTrue(m1.toString().contains("RandomMovement"));
+        assertTrue(m1.toString().contains("maxTurnDeg=5"));
     }
 
     @Test

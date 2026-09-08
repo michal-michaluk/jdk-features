@@ -1,9 +1,8 @@
 package dev.bottega.jdkfeatures.flightcontrol.step10.domain;
 
-/**
- * An immutable 2D Cartesian point.
- *
- * `x` and `y` are the coordinates. Used for aircraft positions, circle centers and area vertices.
- */
 public record Point(double x, double y) {
+
+    public Point move(Velocity vel) {
+        return new Point(x + vel.dx(), y + vel.dy());
+    }
 }

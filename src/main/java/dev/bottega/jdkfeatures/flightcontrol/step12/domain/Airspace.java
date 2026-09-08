@@ -2,6 +2,9 @@ package dev.bottega.jdkfeatures.flightcontrol.step12.domain;
 
 import module java.base;
 
+import java.util.Objects;
+import java.util.random.RandomGenerator;
+
 /**
  * Holds aircraft + areas, advances every aircraft by its velocity (headless, no UI),
  * and exposes **ordered views** over them via the sequenced-collections API (JEP 431).
@@ -23,10 +26,22 @@ public final class Airspace {
 
     private final List<Aircraft> aircraft;
     private final List<Area> areas;
+    private final RandomMovement movement;
+    private final RandomGenerator rng;
 
     public Airspace(List<Aircraft> aircraft, List<Area> areas) {
+        this(aircraft, areas, RandomMovementFactory.defaults());
+    }
+
+    public Airspace(List<Aircraft> aircraft, List<Area> areas, RandomMovement movement) {
+        this(aircraft, areas, movement, movement.generator());
+    }
+
+    private Airspace(List<Aircraft> aircraft, List<Area> areas, RandomMovement movement, RandomGenerator rng) {
         this.aircraft = List.copyOf(aircraft);
         this.areas = List.copyOf(areas);
+        this.movement = Objects.requireNonNull(movement);
+        this.rng = Objects.requireNonNull(rng);
     }
 
     public List<Aircraft> aircraft() {
@@ -35,6 +50,10 @@ public final class Airspace {
 
     public List<Area> areas() {
         return areas;
+    }
+
+    public RandomMovement movement() {
+        return movement;
     }
 
     /**
@@ -49,10 +68,9 @@ public final class Airspace {
      */
     public Airspace step() {
         List<Aircraft> moved = aircraft.stream()
-                .map(ac -> ac.withPosition(new Point(ac.pos().x() + ac.vel().dx(),
-                        ac.pos().y() + ac.vel().dy())))
+                .map(ac -> ac.withVelocity(movement.apply(ac.vel(), rng)).move())
                 .toList();
-        return new Airspace(moved, areas);
+        return new Airspace(moved, areas, movement, rng);
     }
 
     /**
