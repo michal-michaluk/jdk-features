@@ -30,9 +30,10 @@ class AirspaceServerSmokeTest {
         HttpResponse<String> resp = get("/aircraft");
         assertEquals(200, resp.statusCode());
         String body = resp.body();
-        assertTrue(body.contains("\"label\":\"FOX\""));
-        assertTrue(body.contains("\"callsign\":\"FOX123\""));
-        assertTrue(body.contains("\"pos\":{\"x\":"));
+        assertTrue(hasField(body, "label", "FOX"));
+        assertTrue(hasField(body, "callsign", "FOX123"));
+        assertTrue(body.contains("\"pos\""));
+        assertTrue(body.contains("\"vel\""));
     }
 
     @Test
@@ -41,9 +42,9 @@ class AirspaceServerSmokeTest {
         HttpResponse<String> resp = get("/areas");
         assertEquals(200, resp.statusCode());
         String body = resp.body();
-        assertTrue(body.contains("\"kind\":\"circle\""));
-        assertTrue(body.contains("\"kind\":\"polygon\""));
-        assertTrue(body.contains("\"radius\":3.0"));
+        assertTrue(hasField(body, "kind", "circle"));
+        assertTrue(hasField(body, "kind", "polygon"));
+        assertTrue(hasNumber(body, "radius", 3.0));
     }
 
     @Test
@@ -64,10 +65,10 @@ class AirspaceServerSmokeTest {
         HttpResponse<String> resp = post(base + "/tick");
         assertEquals(200, resp.statusCode());
         String after = resp.body();
-        assertTrue(after.contains("\"pos\":{\"x\":11"));
+        assertTrue(hasNumber(after, "x", 11.0));
         assertNotEquals(before, after);
         // model keeps both aircraft but with new positions
-        assertTrue(after.contains("\"label\":\"ECHO\""));
+        assertTrue(hasField(after, "label", "ECHO"));
     }
 
     @Test
@@ -87,5 +88,14 @@ class AirspaceServerSmokeTest {
         return HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder().uri(URI.create(url)).POST(HttpRequest.BodyPublishers.noBody()).build(),
                 HttpResponse.BodyHandlers.ofString());
+    }
+
+    // whitespace-tolerant JSON checks (the pretty text-block JSON has spaces after ':')
+    private static boolean hasField(String body, String field, String value) {
+        return body.matches("(?s).*\\\"" + field + "\\\"\\s*:\\s*\\\"" + value + "\\\".*");
+    }
+
+    private static boolean hasNumber(String body, String field, double value) {
+        return body.matches("(?s).*\\\"" + field + "\\\"\\s*:\\s*" + value + "\\s*[,}].*");
     }
 }

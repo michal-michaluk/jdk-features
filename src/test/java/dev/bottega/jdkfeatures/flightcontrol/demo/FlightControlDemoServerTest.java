@@ -26,18 +26,18 @@ class FlightControlDemoServerTest {
     void servesAircraftPerContract() throws Exception {
         server = FlightControlDemoServer.start(0);
         String body = get("http://localhost:" + server.port() + "/aircraft");
-        assertTrue(body.contains("\"label\":\"FOX\""));
-        assertTrue(body.contains("\"callsign\":\"FOX123\""));
-        assertTrue(body.contains("\"pos\":{\"x\":"));
+        assertTrue(hasField(body, "label", "FOX"));
+        assertTrue(hasField(body, "callsign", "FOX123"));
+        assertTrue(body.contains("\"pos\""));
     }
 
     @Test
     void servesAreasPerContract() throws Exception {
         server = FlightControlDemoServer.start(0);
         String body = get("http://localhost:" + server.port() + "/areas");
-        assertTrue(body.contains("\"kind\":\"circle\""));
-        assertTrue(body.contains("\"kind\":\"polygon\""));
-        assertTrue(body.contains("\"radius\":3.0"));
+        assertTrue(hasField(body, "kind", "circle"));
+        assertTrue(hasField(body, "kind", "polygon"));
+        assertTrue(hasNumber(body, "radius", 3.0));
     }
 
     @Test
@@ -60,5 +60,14 @@ class FlightControlDemoServerTest {
                 HttpRequest.newBuilder().uri(URI.create(url)).GET().build(),
                 HttpResponse.BodyHandlers.ofString());
         return resp.body();
+    }
+
+    // whitespace-tolerant JSON checks (the pretty text-block JSON has spaces after ':')
+    private static boolean hasField(String body, String field, String value) {
+        return body.matches("(?s).*\\\"" + field + "\\\"\\s*:\\s*\\\"" + value + "\\\".*");
+    }
+
+    private static boolean hasNumber(String body, String field, double value) {
+        return body.matches("(?s).*\\\"" + field + "\\\"\\s*:\\s*" + value + "\\s*[,}].*");
     }
 }

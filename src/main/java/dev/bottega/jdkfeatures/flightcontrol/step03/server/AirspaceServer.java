@@ -59,32 +59,45 @@ public final class AirspaceServer {
         respond(ex, aircraftJson(airspace), "application/json");
     }
 
-    // ---- JSON building: simple string concatenation matching the viewer's contract ----
+    // ---- JSON building: text-block "templates" (readable) + formatted() + escaping. ----
+    /** Escape a value for embedding inside a JSON string literal. */
+    private static String jstr(String s) {
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
     private static String aircraftJson(Airspace as) {
-        return "[" + as.aircraft().stream()
-                .map(a -> "{\"id\":\"" + a.id() + "\",\"label\":\"" + a.label()
-                        + "\",\"callsign\":\"" + a.callsign() + "\",\"pos\":{\"x\":" + a.pos().x()
-                        + ",\"y\":" + a.pos().y() + "},\"vel\":{\"dx\":" + a.vel().dx()
-                        + ",\"dy\":" + a.vel().dy() + "}}")
-                .collect(Collectors.joining(",")) + "]";
+        return as.aircraft().stream()
+                .map(a -> """
+                        { "id": "%s", "label": "%s", "callsign": "%s",
+                          "pos": { "x": %s, "y": %s },
+                          "vel": { "dx": %s, "dy": %s } }
+                        """.formatted(jstr(a.id()), jstr(a.label()), jstr(a.callsign()),
+                        a.pos().x(), a.pos().y(), a.vel().dx(), a.vel().dy()).trim())
+                .collect(Collectors.joining(",", "[", "]"));
     }
 
     private static String areasJson(Airspace as) {
-        return "[" + as.areas().stream()
+        return as.areas().stream()
                 .map(AirspaceServer::areaJson)
-                .collect(Collectors.joining(",")) + "]";
+                .collect(Collectors.joining(",", "[", "]"));
     }
 
     private static String areaJson(Area area) {
         return switch (area) {
-            case Circle c -> "{\"kind\":\"circle\",\"label\":\"" + c.label()
-                    + "\",\"center\":{\"x\":" + c.center().x() + ",\"y\":" + c.center().y()
-                    + "},\"radius\":" + c.radius() + ",\"props\":{}}";
-            case Polygon p -> "{\"kind\":\"polygon\",\"label\":\"" + p.label() + "\",\"vertices\":["
-                    + p.vertices().stream()
-                            .map(v -> "{\"x\":" + v.x() + ",\"y\":" + v.y() + "}")
-                            .collect(Collectors.joining(","))
-                    + "],\"props\":{}}";
+            case Circle c -> """
+                    { "kind": "circle", "label": "%s",
+                      "center": { "x": %s, "y": %s },
+                      "radius": %s, "props": {} }
+                    """.formatted(jstr(c.label()), c.center().x(), c.center().y(), c.radius()).trim();
+            case Polygon p -> """
+                    { "kind": "polygon", "label": "%s",
+                      "vertices": [ %s ], "props": {} }
+                    """.formatted(jstr(p.label()),
+                    p.vertices().stream()
+                            .map(v -> """
+                                    { "x": %s, "y": %s }
+                                    """.formatted(v.x(), v.y()).trim())
+                            .collect(Collectors.joining(","))).trim();
         };
     }
 
