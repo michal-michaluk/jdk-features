@@ -2,16 +2,29 @@ package dev.bottega.jdkfeatures.flightcontrol.step03.domain;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.random.RandomGenerator;
 
-/** Holds aircraft + areas and advances every aircraft by its velocity (headless, no UI). */
 public final class Airspace {
 
     private final List<Aircraft> aircraft;
     private final List<Area> areas;
+    private final RandomMovement movement;
+    private final RandomGenerator rng;
 
     public Airspace(List<Aircraft> aircraft, List<Area> areas) {
+        this(aircraft, areas, RandomMovementFactory.defaults());
+    }
+
+    public Airspace(List<Aircraft> aircraft, List<Area> areas, RandomMovement movement) {
+        this(aircraft, areas, movement, movement.generator());
+    }
+
+    private Airspace(List<Aircraft> aircraft, List<Area> areas, RandomMovement movement, RandomGenerator rng) {
         this.aircraft = List.copyOf(aircraft);
         this.areas = List.copyOf(areas);
+        this.movement = Objects.requireNonNull(movement);
+        this.rng = Objects.requireNonNull(rng);
     }
 
     public List<Aircraft> aircraft() {
@@ -22,15 +35,17 @@ public final class Airspace {
         return areas;
     }
 
-    public Airspace step() {
-        List<Aircraft> moved = aircraft.stream()
-                .map(ac -> ac.withPosition(new Point(ac.pos().x() + ac.vel().dx(),
-                        ac.pos().y() + ac.vel().dy())))
-                .toList();
-        return new Airspace(moved, areas);
+    public RandomMovement movement() {
+        return movement;
     }
 
-    /** Exhaustive switch over the sealed {@link Area} hierarchy (no default branch). */
+    public Airspace step() {
+        List<Aircraft> moved = aircraft.stream()
+                .map(ac -> ac.withVelocity(movement.apply(ac.vel(), rng)).move())
+                .toList();
+        return new Airspace(moved, areas, movement, rng);
+    }
+
     public String describe(Area area) {
         return switch (area) {
             case Circle c -> "circle:" + c.label() + " r=" + c.radius();

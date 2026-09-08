@@ -65,9 +65,9 @@ class AirspaceServerSmokeTest {
         HttpResponse<String> resp = post(base + "/tick");
         assertEquals(200, resp.statusCode());
         String after = resp.body();
-        assertTrue(hasNumber(after, "x", 11.0));
+        assertTrue(after.contains("\"x\""));
         assertNotEquals(before, after);
-        // model keeps both aircraft but with new positions
+        // model keeps both aircraft but with new (PRNG-driven) positions
         assertTrue(hasField(after, "label", "ECHO"));
     }
 
