@@ -14,3 +14,17 @@ build/
 .idea/usage.statistics.xml
 *.iml
 out/
+
+# Playwright CLI tooling artifacts (session screenshots / logs)
+.playwright-cli/
+
+# Standard
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE (generic editor droppings)
+*.log
+
+# Node (if any tooling drags it in)
+node_modules/
