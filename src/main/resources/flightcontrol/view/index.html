@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flight Control</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 24px; color: #222; }
+    h1 { font-size: 1.2rem; }
+    .bar { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+    button { font-size: 1rem; padding: 6px 14px; }
+    svg { border: 1px solid #ccc; background: #f6f8fa; max-width: 100%; }
+    .hint { color: #666; font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <h1>Flight Control</h1>
+  <div class="bar">
+    <button onclick="load()">Refresh</button>
+    <span class="hint">Reads <code>GET /aircraft</code> + <code>GET /areas</code> (same origin).
+      Serve this file from your local server to see the scene; changes appear after a refresh.</span>
+  </div>
+  <svg id="map" width="800" height="600" viewBox="0 0 80 60"></svg>
+  <pre id="err" class="hint"></pre>
+
+  <script>
+    /*
+     * Expected JSON contract (provided to participants — the server must return this):
+     *   GET /aircraft -> [ { "id": "...", "label": "...", "callsign": "...",
+     *                        "pos": {"x": number, "y": number},
+     *                        "vel": {"dx": number, "dy": number} }, ... ]
+     *   GET /areas    -> [ { "kind": "circle", "label": "...",
+     *                        "center": {"x": number, "y": number}, "radius": number, "props": {} },
+     *                      { "kind": "polygon", "label": "...",
+     *                        "vertices": [ {"x": number, "y": number}, ... ], "props": {} }, ... ]
+     *
+     * Coordinates are dimensionless; the view maps them onto a 80x60 canvas with y flipped.
+     */
+    const W = 80, H = 60;
+    const svg = document.getElementById('map');
+    const err = document.getElementById('err');
+
+    function svgEl(tag, attrs) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const k in attrs) el.setAttribute(k, attrs[k]);
+      return el;
+    }
+
+    async function load() {
+      err.textContent = '';
+      try {
+        const [aircraft, areas] = await Promise.all([
+          fetch('/aircraft').then(r => r.json()),
+          fetch('/areas').then(r => r.json()),
+        ]);
+        draw(aircraft, areas);
+      } catch (e) {
+        err.textContent = 'Error: ' + e;
+        svg.innerHTML = '';
+      }
+    }
+
+    function draw(aircraft, areas) {
+      svg.innerHTML = '';
+      svg.appendChild(svgEl('rect', { x: 0, y: 0, width: W, height: H, fill: '#f6f8fa', stroke: '#ccc' }));
+      (areas || []).forEach(a => drawArea(a));
+      (aircraft || []).forEach(a => drawAircraft(a));
+    }
+
+    function drawArea(a) {
+      if (a.kind === 'circle') {
+        svg.appendChild(svgEl('circle', {
+          cx: a.center.x, cy: H - a.center.y, r: a.radius,
+          fill: 'rgba(150,150,150,.35)', stroke: '#888',
+        }));
+        label(H - (a.center.y - a.radius), a.label || '');
+      } else if (a.kind === 'polygon') {
+        const pts = a.vertices.map(v => v.x + ',' + (H - v.y)).join(' ');
+        svg.appendChild(svgEl('polygon', { points: pts, fill: 'rgba(150,150,150,.35)', stroke: '#888' }));
+        const ys = a.vertices.map(v => H - v.y);
+        label(Math.min(...ys) - 1, a.label || '');
+      }
+    }
+
+    function drawAircraft(a) {
+      const x = a.pos.x, y = H - a.pos.y;
+      svg.appendChild(svgEl('circle', { cx: x, cy: y, r: 1.1, fill: '#d63d2a' }));
+      svg.appendChild(svgEl('line', {
+        x1: x, y1: y, x2: x + a.vel.dx, y2: y - a.vel.dy,
+        stroke: '#d63d2a', 'stroke-width': 0.15,
+      }));
+      label(y + 1.6, a.label + ' ' + (a.callsign || ''));
+    }
+
+    function label(yText, text) {
+      svg.appendChild(svgEl('text', { x: 2, y: yText, 'font-size': 2.2, fill: '#333' }));
+      // place a readable label next to the element
+      const t = svg.appendChild(svgEl('text', { x: 4, y: yText, 'font-size': 2.2, fill: '#333' }));
+      t.textContent = text;
+    }
+
+    load();
+  </script>
+</body>
+</html>
