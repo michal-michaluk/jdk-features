@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Tiny demo server that exposes the step-02 model (<b>Airspace.sample()</b>) exactly per the
@@ -46,8 +45,8 @@ public final class FlightControlDemoServer {
         scheduler.scheduleAtFixedRate(() -> airspace = advance(airspace), 0, 1, TimeUnit.SECONDS);
 
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
-        server.createContext("/aircraft", ex -> json(ex, aircraftJson(airspace)));
-        server.createContext("/areas", ex -> json(ex, areasJson(airspace)));
+        server.createContext("/aircraft", ex -> json(ex, JsonSerde.aircraftJson(airspace)));
+        server.createContext("/areas", ex -> json(ex, JsonSerde.areasJson(airspace)));
         server.createContext("/", ex -> html(ex));
         server.start();
     }
@@ -106,47 +105,6 @@ public final class FlightControlDemoServer {
         if (x < minX || x > maxX) dx = -dx;
         if (y < minY || y > maxY) dy = -dy;
         return new Aircraft(a.id(), a.label(), a.callsign(), new Point(x, y), new Velocity(dx, dy));
-    }
-
-    // ---- JSON building (matches the viewer contract): text-block "templates". ----
-    private static String jstr(String s) {
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
-
-    static String aircraftJson(Airspace as) {
-        return as.aircraft().stream()
-                .map(a -> """
-                        { "id": "%s", "label": "%s", "callsign": "%s",
-                          "pos": { "x": %s, "y": %s },
-                          "vel": { "dx": %s, "dy": %s } }
-                        """.formatted(jstr(a.id()), jstr(a.label()), jstr(a.callsign()),
-                        a.pos().x(), a.pos().y(), a.vel().dx(), a.vel().dy()).trim())
-                .collect(Collectors.joining(",", "[", "]"));
-    }
-
-    static String areasJson(Airspace as) {
-        return as.areas().stream()
-                .map(FlightControlDemoServer::areaJson)
-                .collect(Collectors.joining(",", "[", "]"));
-    }
-
-    static String areaJson(Area area) {
-        return switch (area) {
-            case Circle c -> """
-                    { "kind": "circle", "label": "%s",
-                      "center": { "x": %s, "y": %s },
-                      "radius": %s, "props": {} }
-                    """.formatted(jstr(c.label()), c.center().x(), c.center().y(), c.radius()).trim();
-            case Polygon p -> """
-                    { "kind": "polygon", "label": "%s",
-                      "vertices": [ %s ], "props": {} }
-                    """.formatted(jstr(p.label()),
-                    p.vertices().stream()
-                            .map(v -> """
-                                    { "x": %s, "y": %s }
-                                    """.formatted(v.x(), v.y()).trim())
-                            .collect(Collectors.joining(","))).trim();
-        };
     }
 
     // ---- HTTP helpers ----
