@@ -2,19 +2,6 @@
 
 > **JDK 21 (final)** · Destrukturyzujesz model w `describe(Area)` z kroku 04.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział z kroku 04 pozostaje: model i operacje na nim tworzą **domenę**, a serwer to tylko
-cienka **infrastruktura** wystawiająca dane. Ten krok zmienia **wyłącznie** implementację
-domenowej metody `describe(Area)` — kontrakt serwera zostaje nietknięty:
-
-- **Domena** (`...step05.domain`) — `describe(Area)` przepisany na **record patterns**
-  (JEP 440): komponenty obszaru są wydestrukturyzowane od razu w dopasowaniu, łącznie z
-  **zagnieżdżonym** patternem na punkt środka. Pakiet domeny nadal **nie importuje** klas
-  sieciowych.
-- **Infrastruktura** (`...step05.server`) — skopiowana bez zmian z kroku 04: `GET /aircraft`,
-  `GET /areas`, `GET /`, `POST /tick`. Serwer nie wie, jak wygląda destrukturyzacja obszaru.
-
 ## Cel ćwiczenia
 Poznasz **Record Patterns** (JEP 440): dopasowanie do **komponentów rekordu** w
 `instanceof`/`switch`. Zamiast rzutować i wołać akcesory, rozpakowujesz od razu

@@ -2,20 +2,6 @@
 
 > **JDK 26 (final)** · Redukujesz importy przez jedno `import module`.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział z kroku 10 (i wcześniejszych) pozostaje bez zmian; ten krok **nie dodaje
-logiki**, a jedynie upraszcza importy w warstwie domeny:
-
-- **Domena** (`...step11.domain`) — model + operacje skopiowane z kroku 10. W klasie
-  `Airspace` grupę importów `java.util.*` zastępuje **jeden** `import module java.base;`.
-  Pakiet domeny nadal nie importuje klas sieciowych; używa wyłącznie typów z modułu
-  `java.base` (`java.util`, `java.util.concurrent`, `java.lang`, `java.util.stream`).
-- **Infrastruktura** (`...step11.server`) — `AirspaceServer` + `JsonSerde` skopiowane bez
-  zmian z kroku 10 (tylko pakiet `...step11.server` i string `step-11` w Javadoc/bannerze).
-  Serwer celowo zachowuje **jawne** importy `com.sun.net.httpserver.*` — to moduł
-  `jdk.httpserver`, a nie `java.base`, więc `import module java.base;` nie obejmuje go.
-
 ## Cel ćwiczenia
 Poznasz **Module Import Declarations** (JEP 511): `import module java.base;` importuje
 wszystkie eksportowane pakiety modułu **jedną linią** zamiast listy `import ...`. W

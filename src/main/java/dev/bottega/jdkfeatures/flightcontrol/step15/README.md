@@ -3,23 +3,6 @@
 > **JDK 26 (preview)** · Skany sektorów jako **strukturalna współbieżność**: `fork`/`join`
 > w `StructuredTaskScope` z `Joiner`.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział pozostaje; ten krok **dodaje logikę do domeny**, serwer pozostaje cienki:
-
-- **Domena** (`...step15.domain`) — model + operacje skopiowane bez zmian z kroku 14
-  (w tym `import module java.base;` w `Airspace` (jako jedyny plik), a także `KeyMaterial`
-  (JEP 524), `SimulationContext`, `Radar`, `ThreatClassifier`, `Telemetry`, `SpeedLimit`)
-  plus **nowe klasy** `SectorScanner`,
-  `ScanReport` i `SectorScanException`. `SectorScanner` jest **strukturalnym** odpowiednikiem
-  ręcznie zakręconego `Radar` (JEP 444): zamiast `Thread.start()` + `join()` każde zadanie
-  jest `fork`owane do **własnego** `StructuredTaskScope` i `join`owane z powrotem zanim scope
-  wyjdzie — nic nie może go „przeżyć" i błędy łapane są w jednym miejscu. Używa tylko
-  `java.util.concurrent.*` — żadnego I/O, żadnej sieci.
-- **Infrastruktura** (`...step15.server`) — `AirspaceServer` + `JsonSerde` skopiowane
-  bez zmian z kroku 14 (tylko pakiet `...step15.server` i string `step-15` w Javadoc/bannerze).
-  Serwer nie zna `SectorScanner` — to wątek domeny.
-
 ## Cel ćwiczenia
 Poznasz **Structured Task Scope** (JEP 525): zbierasz zadania w *scope*, które **jesteś
 zobowiązany zamknąć**, a wynik (`Subtask.get()`) odbierasz dopiero po `join()`. Jak w `Radar`

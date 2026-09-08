@@ -3,20 +3,6 @@
 > **JDK 26 (preview)** · Eksport/import konfiguracji sektora jako PEM
 > (`-----BEGIN ...-----`) przez `PEMEncoder`/`PEMDecoder`.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział pozostaje; ten krok **dodaje logikę do domeny**, serwer pozostaje cienki:
-
-- **Domena** (`...step14.domain`) — model + operacje skopiowane bez zmian z kroku 13
-  (w tym `import module java.base;` w `Airspace` (jako jedyny plik), a także `SimulationContext`,
-  `Radar`, `ThreatClassifier`, `Telemetry`, `SpeedLimit`) plus **nowa klasa** `KeyMaterial`.
-  `KeyMaterial` to wartość domenowa: opakowuje parę kluczy RSA i umie ją **zakodować do PEM**
-  i **zdekodować z powrotem**. Używa tylko `java.security.*` (generacja klucza,
-  `PEMEncoder`/`PEMDecoder`) — żadnej sieci, żadnego I/O.
-- **Infrastruktura** (`...step14.server`) — `AirspaceServer` + `JsonSerde` skopiowane
-  bez zmian z kroku 13 (tylko pakiet `...step14.server` i string `step-14` w Javadoc/bannerze).
-  Serwer nie zna `KeyMaterial` — to wątek domeny.
-
 ## Cel ćwiczenia
 Poznasz **PEM Encodings** (JEP 524): wbudowany `PEMEncoder`/`PEMDecoder` + typ
 `java.security.DEREncodable`. W Flight Control zamieniasz klucz sektora (albo mały

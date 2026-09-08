@@ -2,18 +2,6 @@
 
 > **JDK 21 (final)** · Równoległe „radary" — wiele lekkich scenariuszy naraz.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział z kroku 06 pozostaje: model i operacje na nim tworzą **domenę**, a serwer to tylko
-cienka **infrastruktura** wystawiająca dane. Ten krok dodaje **równoległy radar** wyłącznie po
-stronie domeny:
-
-- **Domena** (`...step07.domain`) — nowa klasa `Radar` + niezmienny `RadarReport`. Każdy samolot
-  jest klasyfikowany na osobnym **wątku wirtualnym**, a wyniki są bezpiecznie agregowane.
-  Pakiet domeny nadal **nie importuje** klas sieciowych.
-- **Infrastruktura** (`...step07.server`) — skopiowana bez zmian z kroku 06: `GET /aircraft`,
-  `GET /areas`, `GET /`, `POST /tick`. Serwer nie zna `Radar` — to wątek domeny.
-
 ## Cel ćwiczenia
 Poznasz **Virtual Threads** (JEP 444): `Thread.ofVirtual()` oraz wirtualny executor. W Flight
 Control to przetwarzanie wielu samolotów „na raz" — każde zadanie to osobny, tani wątek

@@ -2,22 +2,6 @@
 
 > **JDK 25 (final)** · Kontekst przekazywany do zadań bez argumentów.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział z kroku 09 pozostaje: model + operacje to **domena**, serwer to cienka
-**infrastruktura**. Ten krok dodaje nową klasę domeny `SimulationContext` — **bez zmian w
-serwerze**:
-
-- **Domena** (`...step10.domain`) — nowa klasa `SimulationContext` ze stałymi
-  `ScopedValue<String> CURRENT_SECTOR` i `ScopedValue<Long> SIMULATION_ID`
-  (`java.lang.ScopedValue`). Metody: `runWithContext(...)`, `currentSector()`,
-  `currentSectorOr(...)`, `simulationId()`, `isSectorBound()`, `forkInTask(...)`.
-  Pakiet domeny nadal nie importuje klas sieciowych; używa tylko `java.lang`/`java.util.concurrent`
-  (przy czym `StructuredTaskScope` to API **preview** — patrz build.gradle).
-- **Infrastruktura** (`...step10.server`) — skopiowana bez zmian z kroku 09 (tylko pakiet i
-  string `step-10` w Javadoc/bannerze): `GET /aircraft`, `GET /areas`, `GET /`,
-  `POST /tick`. Serwer nie zna `SimulationContext` — to wątek domeny.
-
 ## Cel ćwiczenia
 Poznasz **Scoped Values** (JEP 506): `ScopedValue` — zmienne **kontekstu** przekazywane przez
 wywołania/wątki bez przeciągania ich w argumentach. W Flight Control to `currentSector` i

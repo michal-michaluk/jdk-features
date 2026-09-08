@@ -2,18 +2,6 @@
 
 > **JDK 24 (final)** · Agregujesz telemetrię — okna i foldy na strumieniu `Stream.gather(...)`.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział z kroku 08 pozostaje: model + operacje to **domena**, a serwer to cienka
-**infrastruktura**. Ten krok dodaje nową klasę domeny `Telemetry` — **bez zmian w serwerze**:
-
-- **Domena** (`...step09.domain`) — nowa klasa `Telemetry` (niezmienna lista odczytów) + typ
-  wyniku `Bounds`. Używa `Stream.gather(...)` z wbudowanymi `Gatherers`. Pakiet domeny nadal
-  nie importuje klas sieciowych; importuje tylko `java.util`/`java.util.stream`.
-- **Infrastruktura** (`...step09.server`) — skopiowana bez zmian z kroku 08 (tylko pakiet i
-  string `step-09` w Javadoc/bannerze): `GET /aircraft`, `GET /areas`, `GET /`,
-  `POST /tick`. Serwer nie zna `Telemetry` — to wątek domeny.
-
 ## Cel ćwiczenia
 Poznasz **Stream Gatherers** (JEP 485): nową fazę `Stream.gather(Gatherer)` obok
 `map`/`filter`/`reduce`. Gatherer pozwala na **stanowe** i **okienne** przekształcenia, które

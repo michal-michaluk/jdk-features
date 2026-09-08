@@ -2,19 +2,6 @@
 
 > **JDK 23 (final)** · Krok **wyłącznie dokumentacyjny** — dokumentujesz publiczne API modelu w Markdown.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział z kroku 07 pozostaje bez zmian: **domena** to model + operacje (bez sieci), a **serwer**
-to cienka infrastruktura wystawiająca dane. Ten krok **nie zmienia zachowania** — dokładamy
-wyłącznie dokumentację Javadoc po stronie domeny:
-
-- **Domena** (`...step08.domain`) — model i operacje bez zmian; każdy publiczny typ i publiczna
-  metoda dostają **Markdown Javadoc** (JEP 467). Pakiet domeny nadal nie importuje klas
-  sieciowych.
-- **Infrastruktura** (`...step08.server`) — skopiowana bez zmian z kroku 07 (tylko pakiet i
-  string `step-08` w Javadoc/bannerze): `GET /aircraft`, `GET /areas`, `GET /`,
-  `POST /tick`. Kontrakt HTTP pozostaje stabilny.
-
 ## Cel ćwiczenia
 Poznasz **Markdown Documentation Comments** (JEP 467): komentarze `/** … */` i `///`, w których
 treść piszesz w **Markdown** (nagłówki, listy, `code`, tabele, linki), a nie w surowym HTML.

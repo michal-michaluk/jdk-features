@@ -2,18 +2,6 @@
 
 > **JDK 21 (final)** · Klasyfikujesz samoloty „alarm / sektor / normal" przez `switch`.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział z kroku 05 pozostaje: model i operacje na nim tworzą **domenę**, a serwer to tylko
-cienka **infrastruktura** wystawiająca dane. Ten krok dodaje **klasyfikację** wyłącznie po
-stronie domeny:
-
-- **Domena** (`...step06.domain`) — nowy klasifikator `ThreatClassifier` + enum `Category`.
-  Czysty **switch expression** z typem, strażnikami `when` i `case null`. Pakiet domeny nadal
-  **nie importuje** klas sieciowych.
-- **Infrastruktura** (`...step06.server`) — skopiowana bez zmian z kroku 05: `GET /aircraft`,
-  `GET /areas`, `GET /`, `POST /tick`. Serwer nie zna `Category` — to wątek domeny.
-
 ## Cel ćwiczenia
 Poznasz **Pattern Matching for switch** (JEP 441): `switch` jako **wyrażenie** z **type
 patterns** i strażnikami `when` + obsługa `case null`. W Flight Control to klasyfikacja

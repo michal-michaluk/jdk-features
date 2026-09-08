@@ -3,23 +3,6 @@
 > **JDK 26 (preview)** · Klasyfikacja prędkości `switch`em po **wzorach prymitywnych**
 > (`case int`/`case long`/`case double`) z `when`.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział pozostaje; ten krok **dodaje logikę do domeny**, serwer pozostaje cienki:
-
-- **Domena** (`...step17.domain`) — model + operacje skopiowane bez zmian z kroku 16
-  (w tym `import module java.base;` w `Airspace` (jako jedyny plik), a także `KeyMaterial`
-  (JEP 524), `SectorScanner` (JEP 525), `RiskEvaluator` (JEP 526), `SimulationContext`,
-  `Radar`, `ThreatClassifier`, `Telemetry`, `SpeedLimit`) plus **nowe klasy** `SpeedBucket`
-  (enum) i `SpeedClassifier`.
-  `SpeedClassifier.classifyBySpeed(Number)` to `switch`-wyrażenie po **wzorach prymitywnych**
-  (`case int`, `case long`, `case double`) z **guardami** `when`, `case null` i `default` —
-  bucketuje liczbę do `SLOW`/`CRUISE`/`FAST`/`UNKNOWN`. Używa tylko `java.util.*` —
-  żadnego I/O, żadnej sieci.
-- **Infrastruktura** (`...step17.server`) — `AirspaceServer` + `JsonSerde` skopiowane
-  bez zmian z kroku 16 (tylko pakiet `...step17.server` i string `step-17` w Javadoc/bannerze).
-  Serwer nie zna `SpeedClassifier` — to wątek domeny.
-
 ## Cel ćwiczenia
 Poznasz **Primitive Types in Patterns** (JEP 530): dopasowujesz **prymitywne** typy w
 `switch`/`instanceof`. W Flight Control klasyfikujesz **prędkość** samolotu

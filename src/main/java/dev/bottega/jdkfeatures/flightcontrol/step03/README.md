@@ -68,11 +68,9 @@ Uwaga do kontraktu: pole `props` obszarów występuje w kontrakcie, ale na tym e
 - **Nie blokuj wątku:** `HttpServer.start()` jest asynchroniczny; trzymaj referencję do
   `server`, by móc go zatrzymać (`stop(0)`).
 - **JSON:** ręcznie lub popularną biblioteką — wybierz najprostsze, co daje poprawny format
-  wg kontraktu (najprościej: prosta konkatenacja stringów).
+  wg kontraktu.
 - **Kontrakt ma być stabilny:** to jest API, na które później napiszesz klienta HTTP/3
   (krok 13) — nie zmieniaj nazw pól.
 - **Widok SVG jest dany** — nie musisz go pisać; twoje jest serwowanie i zadbanie, by
   kontrakt zgadzał się z tym, co czyta `index.html` (label→nazwa, pos→współrzędne).
-- **Zadanie do przemyślenia:** dlaczego `POST /tick` jest lepsze na ten etap niż serwer
-  sam przesuwający stan w pętli? (Bo server ma być na tym etapie „statyczny" — ruch to wątek
-  domeny, nie infrastruktury.)
+- 

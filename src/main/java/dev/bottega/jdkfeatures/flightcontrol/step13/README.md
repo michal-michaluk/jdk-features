@@ -2,22 +2,6 @@
 
 > **JDK 26 (final)** · Klient `HttpClient` konsumujący REST (deklaracja HTTP/3 + uczciwy fallback).
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział pozostaje; **tym razem nowa warstwa to klient**, a domena i serwer są skopiowane
-bez zmian z kroku 12:
-
-- **Domena** (`...step13.domain`) — model + operacje skopiowane bez zmian z kroku 12
-  (w tym `import module java.base;` w `Airspace` oraz `SpeedLimit`). Żadnej sieci.
-- **Infrastruktura — serwer** (`...step13.server`) — `AirspaceServer` + `JsonSerde`
-  skopiowane bez zmian z kroku 12 (tylko pakiet `...step13.server` i string `step-13`
-  w Javadoc/bannerze). Serwer nadal wystawia bazowy kontrakt: `GET /aircraft`, `GET /areas`,
-  `GET /`, `POST /tick`. To serwer **HTTP/1.1** (JEP 408).
-- **Infrastruktura — klient** (`...step13.client`) — **nowa** klasa `Http3Client`
-  (JEP 517): buduje `HttpClient` z `version(HTTP_3)`, wystawia `client()`, `get(...)`,
-  `fetch(...)` i `requestVersion(...)`. Okazuje się, że **zadeklarowana** wersja klienta
-  i żądania to `HTTP_3`, ale **realny transport** do serwera HTTP/1.1 to `HTTP_1_1`.
-
 ## Cel ćwiczenia
 Poznasz **HTTP/3 (QUIC)** w `java.net.http.HttpClient` (JEP 517): `version(HTTP_3)`
 i odczyt `request.version()`. W Flight Control budujesz **klienta**, który zapytuje serwer

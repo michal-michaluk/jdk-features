@@ -3,23 +3,6 @@
 > **JDK 26 (preview)** · Drogie wyliczenie (projekcja ryzyka) liczone **raz**, dopiero gdy
 > potrzebne — przez `java.lang.LazyConstant`.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział pozostaje; ten krok **dodaje logikę do domeny**, serwer pozostaje cienki:
-
-- **Domena** (`...step16.domain`) — model + operacje skopiowane bez zmian z kroku 15
-  (w tym `import module java.base;` w `Airspace` (jako jedyny plik), a także `KeyMaterial`
-  (JEP 524), `SectorScanner` (JEP 525), `SimulationContext`, `Radar`, `ThreatClassifier`,
-  `Telemetry`, `SpeedLimit`) plus **nowa klasa** `RiskEvaluator`. Trzyma **drogą projekcję
-  ryzyka** (mapa
-  `aircraftId -> risk score`) w `java.lang.LazyConstant.of(...)`: wartość liczona jest
-  **dokładnie raz**, przy pierwszym `projection()` i potem serwowana z cache
-  (`get()`), z `isInitialized()` (false → true) i `orElse(fallback)`. Używa tylko
-  `java.lang.LazyConstant` + `java.util.*` — żadnego I/O, żadnej sieci.
-- **Infrastruktura** (`...step16.server`) — `AirspaceServer` + `JsonSerde` skopiowane
-  bez zmian z kroku 15 (tylko pakiet `...step16.server` i string `step-16` w Javadoc/bannerze).
-  Serwer nie zna `RiskEvaluator` — to wątek domeny.
-
 ## Cel ćwiczenia
 Poznasz **Lazy Constants** (JEP 526): `LazyConstant.of(Supplier<T>)` pozwala opóźnić
 **kosztowne** wyliczenie do pierwszego `get()` i zapamiętać wynik. W Flight Control to

@@ -22,8 +22,10 @@ stanu wewnętrznego.
 Poznasz **Sequenced Collections** (JEP 431): wspólne interfejsy `SequencedCollection`,
 `SequencedSet`, `SequencedMap` z operacjami `addFirst`/`addLast`, `getFirst`/`getLast`,
 `removeFirst`/`removeLast`, `reversed()`, a dla map `firstEntry`/`lastEntry`/`putFirst`.
-W Flight Control to naturalny narząd „listy samolotów w kolejności" — platforma (kolejność
-zgłoszeń/alarmów), sortowanie wg odległości, mapa `id→aircraft` z widokami od końca.
+W Flight Control to naturalny  „listy samolotów w kolejności":
+- platforma (kolejność zgłoszeń/alarmów),
+- sortowanie wg odległości,
+- mapa `id→aircraft` z widokami od końca.
 
 ## Co zrobić
 1. Uporządkuj samoloty wg odległości od punktu referencyjnego (np. CTR) — w jedną stronę

@@ -2,20 +2,6 @@
 
 > **JDK 26 (final)** · Walidacja i obliczenia **przed** `super(...)`/`this(...)`.
 
-## Architektura: DOMENA vs INFRASTRUKTURA
-
-Podział pozostaje; ten krok **dodaje logikę do domeny**, serwer pozostaje cienki:
-
-- **Domena** (`...step12.domain`) — model z kroku 11 (w tym `import module java.base;`
-  w `Airspace`) plus **nowe klasy** `Limit` (abstrakcyjna baza) i `SpeedLimit` (wartość
-  domenowa). Konstruktor `SpeedLimit` demonstruje **JEP 513**: waliduje argumenty
-  (`Objects.requireNonNull` → `NullPointerException`, blank → `IllegalArgumentException`),
-  **wylicza wartość pochodną** (clamp żądanej prędkości do `[0, ABSOLUTE_MAX]`) i przypisuje
-  pola finalne — wszystko **przed** jawnym `super(...)`. Domeny nie interesuje sieć.
-- **Infrastruktura** (`...step12.server`) — `AirspaceServer` + `JsonSerde` skopiowane
-  bez zmian z kroku 11 (tylko pakiet `...step12.server` i string `step-12` w Javadoc/bannerze).
-  Serwer nie zna `SpeedLimit` — to wątek domeny.
-
 ## Cel ćwiczenia
 Poznasz **Flexible Constructor Bodies** (JEP 513): w konstruktorze możesz **wykonać
 instrukcje i weryfikację argumentów przed** jawnym wywołaniem `super(...)`/`this(...)`.
