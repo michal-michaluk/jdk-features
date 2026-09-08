@@ -1,46 +1,64 @@
 # Step 12 — JEP 513 — Flexible Constructor Bodies
 
-> **JDK 25 (final)** · Walidacja i obliczenia **przed** `super(...)`/`this(...)`.
+> **JDK 26 (final)** · Walidacja i obliczenia **przed** `super(...)`/`this(...)`.
+
+## Architektura: DOMENA vs INFRASTRUKTURA
+
+Podział pozostaje; ten krok **dodaje logikę do domeny**, serwer pozostaje cienki:
+
+- **Domena** (`...step12.domain`) — model z kroku 11 (w tym `import module java.base;`
+  w `Airspace`) plus **nowe klasy** `Limit` (abstrakcyjna baza) i `SpeedLimit` (wartość
+  domenowa). Konstruktor `SpeedLimit` demonstruje **JEP 513**: waliduje argumenty
+  (`Objects.requireNonNull` → `NullPointerException`, blank → `IllegalArgumentException`),
+  **wylicza wartość pochodną** (clamp żądanej prędkości do `[0, ABSOLUTE_MAX]`) i przypisuje
+  pola finalne — wszystko **przed** jawnym `super(...)`. Domeny nie interesuje sieć.
+- **Infrastruktura** (`...step12.server`) — `AirspaceServer` + `JsonSerde` skopiowane
+  bez zmian z kroku 11 (tylko pakiet `...step12.server` i string `step-12` w Javadoc/bannerze).
+  Serwer nie zna `SpeedLimit` — to wątek domeny.
 
 ## Cel ćwiczenia
 Poznasz **Flexible Constructor Bodies** (JEP 513): w konstruktorze możesz **wykonać
 instrukcje i weryfikację argumentów przed** jawnym wywołaniem `super(...)`/`this(...)`.
 Wcześniej taka logika musiała być po `super`. W Flight Control to naturalne miejsce na:
 `requireNonNull` argumentów, **wyliczenie wartości pochodnych** (np. limit top-speed z
-typu samolotu) i **clamp** — zanim obiekt powstanie, a w `record` — zanim składowe są
-ustalone.
+typu samolotu) i **clamp** — zanim obiekt powstanie.
 
 ## Co zrobić
-1. W konstruktorze (klasy lub `record`) **zweryfikuj dane przed** `super(...)`: `requireNonNull`,
-   zakresy, spójność (np. `radius > 0`, `vertices >= 3`, prędkość > 0).
-2. **Wylicz** pochodną wartość przed super i przekaż ją (np. `topSpeed` z `category`,
-   `bbox` z `vertices`).
-3. **Clamp** wartość do dozwolonego zakresu (np. `maxSpeedDelta` nieujemne, kąt w [0,360)).
+1. W konstruktorze (`SpeedLimit`, a nie `record`) **zweryfikuj dane przed** `super(...)`:
+   `requireNonNull` labela, zakres (label nie może być blank), limit prędkości >= 0.
+2. **Wylicz** pochodną wartość przed `super`: skwantowany/klamowany limit
+   (`effectiveMax`) oraz znormalizowany label (`trim().toUpperCase()`).
+3. **Clamp** wartość do dozwolonego zakresu: ujemna wartość → `0`, powyżej
+   `ABSOLUTE_MAX` → `ABSOLUTE_MAX`.
 4. Sprawdź, że wyjątki rzucane są **zanim** obiekt/`super` wystartuje.
 
 ## Dane testowe (YAML)
 ```yaml
-valid:   {radius: 3, vertices: 4, speed: 100, label: TMA}
-derived: {topSpeedBound, bbox}
+valid:     {label: "  tma ", requestedMaxSpeed: 250}   # -> label "TMA", effectiveMax 250, kind "speed"
+clamp:     {requestedMaxSpeed: -5}                     # -> effectiveMax 0 (ujemne -> 0)
+clampMax:  {requestedMaxSpeed: 2000}                   # -> effectiveMax ABSOLUTE_MAX (1000)
 invalid:
-  - {vertices: 2}        # -> IllegalArgumentException PRZED super()
-  - {speed: -5}          # -> clamp do 0 / wyjątek przed super()
-  - {label: null}        # -> NullPointerException (requireNonNull)
+  - {label: null}         # -> NullPointerException PRZED super()
+  - {label: "   "}        # -> IllegalArgumentException (blank) PRZED super()
+delegating: {label: "CTR"}                              # -> this(label, 0.0) -> effectiveMax 0
 ```
 
 ## Napisz testy (akceptacja)
-- Niepoprawne dane (**`vertices: 2`**, **`speed: -5`**, **`null`**) rzucają wyjątek **przed**
-  `super`/`this` (sprawdź, że konstruktor nie wszedł w stan).
-- Wartości pochodne (top-speed, bbox) liczone poprawnie z danych wejściowych.
-- Poprawne dane tworzą obiekt; clamp (ujemna prędkość → 0) działa.
+- Niepoprawne dane (**`label: null`**, **blank**) rzucają wyjątek **przed** `super`/`this`
+  (sprawdź, że konstruktor nie wszedł w stan).
+- Wartości pochodne (znormalizowany label, `effectiveMax`) liczone poprawnie z danych.
+- Clamp działa: ujemna prędkość → `0`, przekroczenie `ABSOLUTE_MAX` → `ABSOLUTE_MAX`.
+- `kind()`, `label()`, `effectiveMax()`, `exceededBy(...)` dostępne; delegujący konstruktor
+  `SpeedLimit(label)` przechodzi.
+- (ciągłość) testy domeny i kontrakt serwera z kroku 11 nadal przechodzą; pakiet
+  `step12.domain` ma **100% pokrycia linii**.
 
 ## Wskazówki
-- W `record` możesz wywołać **`this(...)`** (compact constructor) lub wykonać logikę przed
-  `super`? — sprawdź, co JEP 513 realnie pozwala w `record`; w klasie `this`/`super`
-  musi być pierwszym... nie, teraz możesz mieć instrukcje przed nim.
 - **Zasada:** waliduj argumenty, zanim zbudujesz obiekt — rzucaj `NullPointerException`/
   `IllegalArgumentException` z czytelnym komunikatem.
-- **Wartości pochodne:** nie trzymaj ich jako pól jeśli są wyliczalne; albo `record`
-  z dodatkowym komponentem, albo `derive` w konstruktorze.
-- **Do przemyślenia:** dlaczego bezpieczniej jest odrzucić `vertices: 2` od razu, niż
+- **Wartości pochodne:** nie trzymaj ich jako pól jeśli są wyliczalne; jeśli są — wylicz je
+  w konstruktorze (jak `effectiveMax`) zamiast w `record`.
+- JEP 513 nadal **nie pozwala** czytać `this` (pól/metod instancji) przed `super`/`this` —
+  tylko operacje na lokalnych/parametrach i wywołania statyczne są legalne.
+- **Do przemyślenia:** dlaczego bezpieczniej jest odrzucić `label: null` od razu, niż
   wpuścić obiekt „prawie-pusty" i łapać gdzieś później?
