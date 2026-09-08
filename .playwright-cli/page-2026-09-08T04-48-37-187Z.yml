@@ -1,0 +1,15 @@
+- generic [active] [ref=e1]:
+  - heading "Flight Control" [level=1] [ref=e2]
+  - generic [ref=e3]:
+    - button "Refresh" [ref=e4]
+    - generic [ref=e5]:
+      - text: Reads
+      - code [ref=e6]: GET /aircraft
+      - text: +
+      - code [ref=e7]: GET /areas
+      - text: (same origin). Serve this file from your local server to see the scene; changes appear after a refresh.
+  - img [ref=e8]:
+    - generic [ref=e11]: CTR
+    - generic [ref=e13]: TMA
+    - generic [ref=e15]: FOX FOX123
+    - generic [ref=e17]: ECHO ECHO456

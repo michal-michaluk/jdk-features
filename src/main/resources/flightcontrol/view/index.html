@@ -17,8 +17,9 @@
   <h1>Flight Control</h1>
   <div class="bar">
     <button onclick="load()">Refresh</button>
+    <label><input type="checkbox" id="auto" checked onchange="toggleAuto()"> Auto-refresh (2s)</label>
     <span class="hint">Reads <code>GET /aircraft</code> + <code>GET /areas</code> (same origin).
-      Serve this file from your local server to see the scene; changes appear after a refresh.</span>
+      Serve this file from your local server; the scene re-polls automatically or manually.</span>
   </div>
   <svg id="map" width="800" height="600" viewBox="0 0 80 60"></svg>
   <pre id="err" class="hint"></pre>
@@ -37,8 +38,13 @@
      * Coordinates are dimensionless; the view maps them onto a 80x60 canvas with y flipped.
      */
     const W = 80, H = 60;
+    const PAD = 3;                       // padding around the fitted scene
     const svg = document.getElementById('map');
     const err = document.getElementById('err');
+
+    // World -> view transform, auto-fitted to the data bounds (y flipped).
+    let toView = ([x, y]) => [x, y];
+    let scale = 1;
 
     function svgEl(tag, attrs) {
       const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -60,8 +66,40 @@
       }
     }
 
+    // ---- auto-refresh (poll + redraw) ----
+    let autoTimer = null;
+    const AUTO_MS = 2000;
+    function toggleAuto() {
+      if (document.getElementById('auto').checked) startAuto(); else stopAuto();
+    }
+    function startAuto() {
+      stopAuto();
+      autoTimer = setInterval(load, AUTO_MS);
+    }
+    function stopAuto() {
+      if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+    }
+
+    // Collect every point we need to fit, then build a scale/translate that centers the scene.
+    function fit(aircraft, areas) {
+      const xs = [], ys = [];
+      const push = (x, y) => { xs.push(x); ys.push(y); };
+      (aircraft || []).forEach(a => { push(a.pos.x, a.pos.y); push(a.pos.x + a.vel.dx, a.pos.y + a.vel.dy); });
+      (areas || []).forEach(a => {
+        if (a.kind === 'circle') { push(a.center.x - a.radius, a.center.y - a.radius); push(a.center.x + a.radius, a.center.y + a.radius); }
+        else (a.vertices || []).forEach(v => push(v.x, v.y));
+      });
+      if (!xs.length) { xs.push(0, 10); ys.push(0, 10); }
+      let minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+      const spanX = Math.max(maxX - minX, 1e-6), spanY = Math.max(maxY - minY, 1e-6);
+      scale = Math.min((W - 2 * PAD) / spanX, (H - 2 * PAD) / spanY);
+      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      toView = ([x, y]) => { const sx = (x - cx) * scale + W / 2; const sy = (y - cy) * scale + H / 2; return [sx, H - sy]; };
+    }
+
     function draw(aircraft, areas) {
       svg.innerHTML = '';
+      fit(aircraft, areas);
       svg.appendChild(svgEl('rect', { x: 0, y: 0, width: W, height: H, fill: '#f6f8fa', stroke: '#ccc' }));
       (areas || []).forEach(a => drawArea(a));
       (aircraft || []).forEach(a => drawAircraft(a));
@@ -69,37 +107,30 @@
 
     function drawArea(a) {
       if (a.kind === 'circle') {
+        const [cx, cy] = toView([a.center.x, a.center.y]);
         svg.appendChild(svgEl('circle', {
-          cx: a.center.x, cy: H - a.center.y, r: a.radius,
+          cx: cx, cy: cy, r: a.radius * scale,
           fill: 'rgba(150,150,150,.35)', stroke: '#888',
         }));
-        label(H - (a.center.y - a.radius), a.label || '');
+        svg.appendChild(svgEl('text', { x: cx - a.radius, y: cy - a.radius, 'font-size': 2.6, fill: '#333' })).textContent = a.label || '';
       } else if (a.kind === 'polygon') {
-        const pts = a.vertices.map(v => v.x + ',' + (H - v.y)).join(' ');
+        const pts = a.vertices.map(v => toView([v.x, v.y]).join(',')).join(' ');
         svg.appendChild(svgEl('polygon', { points: pts, fill: 'rgba(150,150,150,.35)', stroke: '#888' }));
-        const ys = a.vertices.map(v => H - v.y);
-        label(Math.min(...ys) - 1, a.label || '');
+        const ys = a.vertices.map(v => toView([v.x, v.y])[1]);
+        svg.appendChild(svgEl('text', { x: Math.min(...a.vertices.map(v => toView([v.x, v.y])[0])), y: Math.min(...ys) - 1, 'font-size': 2.6, fill: '#333' })).textContent = a.label || '';
       }
     }
 
     function drawAircraft(a) {
-      const x = a.pos.x, y = H - a.pos.y;
-      svg.appendChild(svgEl('circle', { cx: x, cy: y, r: 1.1, fill: '#d63d2a' }));
-      svg.appendChild(svgEl('line', {
-        x1: x, y1: y, x2: x + a.vel.dx, y2: y - a.vel.dy,
-        stroke: '#d63d2a', 'stroke-width': 0.15,
-      }));
-      label(y + 1.6, a.label + ' ' + (a.callsign || ''));
-    }
-
-    function label(yText, text) {
-      svg.appendChild(svgEl('text', { x: 2, y: yText, 'font-size': 2.2, fill: '#333' }));
-      // place a readable label next to the element
-      const t = svg.appendChild(svgEl('text', { x: 4, y: yText, 'font-size': 2.2, fill: '#333' }));
-      t.textContent = text;
+      const [x, y] = toView([a.pos.x, a.pos.y]);
+      const [x2, y2] = toView([a.pos.x + a.vel.dx, a.pos.y + a.vel.dy]);
+      svg.appendChild(svgEl('circle', { cx: x, cy: y, r: 1.6, fill: '#d63d2a' }));
+      svg.appendChild(svgEl('line', { x1: x, y1: y, x2: x2, y2: y2, stroke: '#d63d2a', 'stroke-width': 0.3 }));
+      svg.appendChild(svgEl('text', { x: x + 2, y: y - 2, 'font-size': 2.6, fill: '#333' })).textContent = (a.label || '') + ' ' + (a.callsign || '');
     }
 
     load();
+    startAuto();
   </script>
 </body>
 </html>
