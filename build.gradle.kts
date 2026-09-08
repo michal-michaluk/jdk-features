@@ -81,13 +81,3 @@ tasks.register<JavaExec>("runDemos") {
     mainClass.set("dev.bottega.jdkfeatures.DemoRunner")
     jvmArgs("--enable-preview", "--add-modules=jdk.incubator.vector,jdk.httpserver", "--enable-native-access=ALL-UNNAMED")
 }
-
-// Demo of the Flow-Control first step: serves the step-02 model to the SVG viewer.
-tasks.register<JavaExec>("runFlightControlDemo") {
-    group = "application"
-    description = "Starts a local server exposing the step-02 Flight Control model to the SVG viewer."
-    classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("dev.bottega.jdkfeatures.flightcontrol.demo.FlightControlDemoServer")
-    args("8090")
-    jvmArgs("--add-modules=jdk.httpserver")
-}
