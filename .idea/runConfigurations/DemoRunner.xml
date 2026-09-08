@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="DemoRunner" type="Application" factoryName="Application" nameIsGenerated="false">
+    <option name="MAIN_CLASS_NAME" value="dev.bottega.jdkfeatures.DemoRunner" />
+    <option name="VM_PARAMETERS" value="--enable-preview --add-modules=jdk.incubator.vector,jdk.httpserver --enable-native-access=ALL-UNNAMED" />
+    <module name="jdk-features" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

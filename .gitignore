@@ -1,0 +1,16 @@
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+# Un-ignore the whole .idea dir (the parent repo ignores it), then re-ignore only the
+# volatile / machine-specific files. IntelliJ's own .idea/.gitignore also excludes these.
+!.idea/
+.idea/workspace.xml
+.idea/db-forest-config.xml
+.idea/dataSources/
+.idea/dataSources.local.xml
+.idea/httpRequests/
+.idea/shelf/
+.idea/queries/
+.idea/usage.statistics.xml
+*.iml
+out/
