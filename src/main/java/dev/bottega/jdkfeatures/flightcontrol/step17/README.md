@@ -1,47 +1,64 @@
-# Step 17 — JEP 530 — Primitive Patterns (preview)
+# Step 17 — JEP 530 — Primitive Type Patterns in `switch` (preview)
 
-> **JDK 26 (preview)** · Przełączasz po **typach prymitywnych** w `switch`.
+> **JDK 26 (preview)** · Klasyfikacja prędkości `switch`em po **wzorach prymitywnych**
+> (`case int`/`case long`/`case double`) z `when`.
+
+## Architektura: DOMENA vs INFRASTRUKTURA
+
+Podział pozostaje; ten krok **dodaje logikę do domeny**, serwer pozostaje cienki:
+
+- **Domena** (`...step17.domain`) — model + operacje skopiowane bez zmian z kroku 16
+  (w tym `import module java.base;` w `Airspace` (jako jedyny plik), a także `KeyMaterial`
+  (JEP 524), `SectorScanner` (JEP 525), `RiskEvaluator` (JEP 526), `SimulationContext`,
+  `Radar`, `ThreatClassifier`, `Telemetry`, `SpeedLimit`) plus **nowe klasy** `SpeedBucket`
+  (enum) i `SpeedClassifier`.
+  `SpeedClassifier.classifyBySpeed(Number)` to `switch`-wyrażenie po **wzorach prymitywnych**
+  (`case int`, `case long`, `case double`) z **guardami** `when`, `case null` i `default` —
+  bucketuje liczbę do `SLOW`/`CRUISE`/`FAST`/`UNKNOWN`. Używa tylko `java.util.*` —
+  żadnego I/O, żadnej sieci.
+- **Infrastruktura** (`...step17.server`) — `AirspaceServer` + `JsonSerde` skopiowane
+  bez zmian z kroku 16 (tylko pakiet `...step17.server` i string `step-17` w Javadoc/bannerze).
+  Serwer nie zna `SpeedClassifier` — to wątek domeny.
 
 ## Cel ćwiczenia
-Poznasz **Primitive Patterns** (JEP 530): `switch` dopasowuje **typy prymitywne** —
-`case int`, `case long`, `case double`, `case byte`… z konwersją i `default`. Wcześniej
-`switch` po `Object` nie mógł odróżnić `Integer` od `Long` od `Double` w jednym wyrażeniu.
-W Flight Control to wygodne **bucketing** prędkości/wysokości: wartość `double` wpada do
-przedziału (case `double` + strażnik) albo typowanej kategorii.
+Poznasz **Primitive Types in Patterns** (JEP 530): dopasowujesz **prymitywne** typy w
+`switch`/`instanceof`. W Flight Control klasyfikujesz **prędkość** samolotu
+(`SLOW`/`CRUISE`/`FAST`) — a że selektorem jest `Number`, każdy wzorzec prymitywny łapie
+dokładnie swój „boxed" typ (`Integer` → `case int`, `Long` → `case long`, `Double` →
+`case double`), a obcy `Number` (np. `Float`) i `null` idą do `default`/`case null`.
 
 ## Co zrobić
-1. Zbuduj `bucketing(speed)` przez `switch` na `double`/`Number`:
-   - `case double v when v < 50 -> SLOW`,
-   - `case double v when v < 300 -> CRUISE`,
-   - `case double v -> FAST`.
-2. (opcjonalnie) rozróżnij typ: `case Integer i` vs `case Long l` vs `case Double d` w
-   jednym `switch` — tego wcześniej nie dało się zrobić.
-3. Obsłuż `null`/`default`.
-4. Zwróć kategorię jako wartość switch (expression).
+1. Napisz `switch (Number speed)` z wzorcami `case int`, `case long`, `case double`
+   + **guard** `when` (progi `SLOW`/`CRUISE`/`FAST`).
+2. Dodaj `case null` i `default` (→ `UNKNOWN`).
+3. Przetestuj **wszystkie** gałęzie: int/long/double, granice (`150`, `300`), `null`,
+   oraz `Number` innego typu (`Float` → `default`).
+4. Opcjonalnie wywołaj z domeny: `classify(aircraft)` liczy prędkość i bucketuje.
 
 ## Dane testowe (YAML)
 ```yaml
-speedBuckets:
-  {min: 0,   max: 50,  bucket: SLOW}
-  {min: 50,  max: 300, bucket: CRUISE}
-  {min: 300, max: +inf, bucket: FAST}
-values:
-  10.0 -> SLOW
-  120.0 -> CRUISE
-  400.0 -> FAST
-  null -> UNKNOWN (default/null)
+speed:
+  slow:   [50, 50L, 50.0]           #  < 150
+  cruise: [150, 150L, 150.0]        #  150 .. < 300
+  fast:   [300, 300, 400L, 400.0]   #  >= 300
+unknown: [null, 50f, BigDecimal("50")]  # case null / default
 ```
 
 ## Napisz testy (akceptacja)
-- Wartości wpadają do właściwych `case` (`10.0→SLOW`, `120→CRUISE`, `400→FAST`).
-- `null` → `default` (lub `case null`).
-- (opcjonalnie) różne typy `Integer`/`Long`/`Double` rozróżnione w jednym `switch`.
+- `case int`, `case long`, `case double` — każda gałąź osiągnięta (SLOW/CRUISE/FAST).
+- Granice: `150` → `CRUISE`, `300` → `FAST`.
+- `null` → `UNKNOWN` (`case null`); inny `Number` (np. `Float`) → `UNKNOWN` (`default`).
+- `classify(aircraft)` liczy prędkość i zwraca bucket.
+- (ciągłość) testy domeny i kontrakt serwera z kroku 16 nadal przechodzą; pakiet
+  `step17.domain` ma **100% pokrycia linii**.
 
 ## Wskazówki
-- JEP 530 jest **preview** (JDK 26) → `--enable-preview`.
-- Dopasowanie prymitywu: `case int` dopasowuje `int`/`Integer` (po dereferencji boxingu), a
-  `case double` po konwersji — **sprawdź konwersje** w dokumentacji (nie zgaduj).
-- Strażnik `when` pozwala na **zakresy** (`when v < 300`).
-- Kolejność `case` ma znaczenie: węższy zakres (`< 50`) przed szerszym (`else`-owe).
-- **Do przemyślenia:** jakie zalety ma tu `switch` z `when` vs. `if/else if`? (czytelność,
-  wyczerpywalność, brak pomyłek w zakresach)
+- JEP 530 jest **preview** (JDK 26) → `--enable-preview` przy kompilacji/run.
+- `switch` nie może mieć selektora `double` — **dlatego** wzorzec prymitywny działa na
+  `Number` (boxed) i dopasowuje dokładny typ (`case double` ↔ `Double`).
+- Ustaw `case null`/`default` na końcu; wzorce prymitywne dopasowują **dokładny** typ
+  boxed, więc `default` łapie `Float`/`BigDecimal`/oboje.
+- **Kolejność ma znaczenie** przy konwersjach rozszerzających — tu trzymamy wzorce
+  `int` → `long` → `double` i osobne progi `when`, żeby wyniki były jednoznaczne.
+- **Do przemyślenia:** co dają wzorce prymitywne zamiast ręcznego `if-else` na
+  `instanceof Number` + rzutowania? (deklaratywność, wyczerpywalność, brak `cast`).
