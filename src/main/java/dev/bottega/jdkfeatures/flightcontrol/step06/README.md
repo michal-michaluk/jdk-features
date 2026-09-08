@@ -2,47 +2,64 @@
 
 > **JDK 21 (final)** · Klasyfikujesz samoloty „alarm / sektor / normal" przez `switch`.
 
+## Architektura: DOMENA vs INFRASTRUKTURA
+
+Podział z kroku 05 pozostaje: model i operacje na nim tworzą **domenę**, a serwer to tylko
+cienka **infrastruktura** wystawiająca dane. Ten krok dodaje **klasyfikację** wyłącznie po
+stronie domeny:
+
+- **Domena** (`...step06.domain`) — nowy klasifikator `ThreatClassifier` + enum `Category`.
+  Czysty **switch expression** z typem, strażnikami `when` i `case null`. Pakiet domeny nadal
+  **nie importuje** klas sieciowych.
+- **Infrastruktura** (`...step06.server`) — skopiowana bez zmian z kroku 05: `GET /aircraft`,
+  `GET /areas`, `GET /`, `POST /tick`. Serwer nie zna `Category` — to wątek domeny.
+
 ## Cel ćwiczenia
-Poznasz **Pattern Matching for switch** (JEP 441): `switch` jako wyrażenie z **type
+Poznasz **Pattern Matching for switch** (JEP 441): `switch` jako **wyrażenie** z **type
 patterns** i strażnikami `when` + obsługa `case null`. W Flight Control to klasyfikacja
-zagrożenia: samolot dostaje kategorię na podstawie prędkości, kierunku i tego, czy leci w
-sektorze. Logika „co z tym zrobić" jest czytelna i **wyczerpująca** (sealed + `null`
-wymuszone przez kompilator).
+zagrożenia: samolot dostaje kategorię na podstawie prędkości i tego, czy leci w sektorze.
+Logika „co z tym zrobić" jest czytelna i **wyczerpująca** (finalny typ `Aircraft` + `null`).
 
 ## Co zrobić
-1. Zdefiniuj **kategorie** (np. `ALARM`, `SECTOR`, `NORMAL`, `UNKNOWN`).
-2. `classify(Aircraft)` przez `switch` na typie (`Aircraft`, `null`) z `when`:
-   - `case Aircraft a when a.speed() > alarmMinSpeed && inSector(a) -> ALARM`,
-   - `case Aircraft a when inSector(a) -> SECTOR`,
+1. Zdefiniuj **kategorie** (`Category`): `ALARM`, `SECTOR`, `NORMAL`, `UNKNOWN`.
+2. `classify(Aircraft)` — `switch` na typie (`Aircraft`, `null`) z `when`:
+   - `case Aircraft a when speed(a) > alarmMinSpeed && inside(a.pos(), sector) -> ALARM`,
+   - `case Aircraft a when inside(a.pos(), sector) -> SECTOR`,
    - `case Aircraft a -> NORMAL`,
    - `case null -> UNKNOWN`.
-3. Dodaj pomocnicze `speed()` (długość wektora) i `inSector(...)` (czy w obszarze).
-4. Reguły (`minSpeed`, zakres sektora) parametryzuj — z YAML poniżej.
+3. Dodaj pomocnicze `speed(Aircraft)` (długość wektora prędkości) i
+   `inside(Point, Area)` (czy punkt w obszarze — tu: koło sektora).
+4. Parametryzuj reguły: `alarmMinSpeed` i sektor (koło CTR) przekazuj do `ThreatClassifier`.
 
 ## Dane testowe (YAML) — reguła + obiekty
 ```yaml
 alarm:
-  minSpeed: 300
-  sectorDeg: [0, 90]     # kierunek (azimut) = sektor
+  minSpeed: 10
+  sector: {kind: circle, center: {x: 0, y: 0}, radius: 3, label: CTR}
 aircraft:
-  - {label: HOT,   pos: {x: 9, y: 1}, vel: {dx: 10, dy: 0}, speed: 100}   # w sektorze, >minSpeed -> ALARM
-  - {label: COOL,  pos: {x: 1, y: 0}, vel: {dx: 2,  dy: 0}, speed: 20}    # w sektorze -> SECTOR
-  - {label: AWAY,  pos: {x: 9, y: 9}, vel: {dx: 1,  dy: 1}, speed: 15}    # poza sektorem -> NORMAL
-  - null                                                                  # -> UNKNOWN
+  - {label: HOT,   pos: {x: 1, y: 0}, vel: {dx: 20, dy: 0}}   # w sektorze, speed>min -> ALARM
+  - {label: COOL,  pos: {x: 1, y: 0}, vel: {dx: 5,  dy: 0}}   # w sektorze, speed<=min -> SECTOR
+  - {label: AWAY,  pos: {x: 9, y: 9}, vel: {dx: 1,  dy: 1}}   # poza sektorem -> NORMAL
+  - null                                                        # -> UNKNOWN
+expect: speed(HOT)=20, speed(COOL)=5, speed(AWAY)=~1.41
 ```
 
 ## Napisz testy (akceptacja)
-- Każdy `case`/guard: ALARM (prędkość > minSpeed **i** w sektorze), SECTOR (tylko sektor),
-  NORMAL (poza), UNKNOWN (`null`).
-- Wyczerpujący `switch` po sealed (brak `default` jeśli wszystkie typy pokryte) — albo
-  świadomy `default`.
-- `switch` zwraca wartość (expression) — przypisujesz wynik, nie `return`.
+- Każdy `case`/guard: ALARM (prędkość `> minSpeed` **i** w sektorze), SECTOR (w sektorze,
+  `speed <= min`), NORMAL (poza), UNKNOWN (`null`).
+- Granica: `speed == minSpeed` **nie** jest ALARM (strażnik jest ostry `>`).
+- `speed()` = długość Euklidesowa wektora; `inside()` na granicy/wewnątrz/poza kołem.
+- `inside()` dla nie-koła (wielokąt) zwraca `false`.
+- Wyczerpujący `switch`: `null` + finalny typ `Aircraft` pokrywają wszystko — bez `default`.
+- (ciągłość) testy domeny i kontrakt serwera z kroku 05 nadal przechodzą; pakiet
+  `step06.domain` ma **100% pokrycia linii**.
 
 ## Wskazówki
 - Strażnik `when` pozwala warunkować dopasowanie bez twardego zagnieżdżania `if`.
 - `case null` **wymusza** jawną obsługę `null` w przełączaniu (JEP 441) — nie musisz pisać
-  osobnego `if (x == null)`.
-- „W sektorze": azimut z `atan2(dy, dx)` (od 0–360°), porównaj z `sectorDeg`.
+  osobnego `if (aircraft == null)`.
+- „W sektorze": odległość od środka koła `<= radius` — policz `Math.hypot(dx, dy)`.
 - Kolejność `case` ma znaczenie — szerszy wzorzec (`Aircraft`) umieść **po** węższych
   z `when`, inaczej wcześniejszy złapie wszystko.
-- Wartość `switch` po **sealed** + bez `default` jest wyczerpująca; kompilator to sprawdzi.
+- `switch` jako **wyrażenie** zwraca wartość (przypisujesz wynik, nie `return`).
+- **Do przemyślenia:** dlaczego `case null` jest potrzebny skoro `Aircraft` jest finalny?
