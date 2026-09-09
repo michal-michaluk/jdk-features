@@ -10,21 +10,15 @@ public final class Airspace {
     private final List<Aircraft> aircraft;
     private final List<Area> areas;
     private final RandomMovement movement;
-    private final RandomGenerator rng;
 
     public Airspace(List<Aircraft> aircraft, List<Area> areas) {
         this(aircraft, areas, RandomMovementFactory.defaults());
     }
 
-    public Airspace(List<Aircraft> aircraft, List<Area> areas, RandomMovement movement) {
-        this(aircraft, areas, movement, movement.generator());
-    }
-
-    private Airspace(List<Aircraft> aircraft, List<Area> areas, RandomMovement movement, RandomGenerator rng) {
+    private Airspace(List<Aircraft> aircraft, List<Area> areas, RandomMovement movement) {
         this.aircraft = List.copyOf(aircraft);
         this.areas = List.copyOf(areas);
         this.movement = Objects.requireNonNull(movement);
-        this.rng = Objects.requireNonNull(rng);
     }
 
     public List<Aircraft> aircraft() {
@@ -41,9 +35,9 @@ public final class Airspace {
 
     public Airspace step() {
         List<Aircraft> moved = aircraft.stream()
-                .map(ac -> ac.withVelocity(movement.apply(ac.vel(), rng)).move())
+                .map(ac -> ac.withVelocity(movement.apply(ac.vel())).move())
                 .toList();
-        return new Airspace(moved, areas, movement, rng);
+        return new Airspace(moved, areas, movement);
     }
 
     public String describe(Area area) {

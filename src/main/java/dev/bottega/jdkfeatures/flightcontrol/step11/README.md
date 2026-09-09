@@ -27,7 +27,7 @@ After:   1 linia  import module java.base;
 - Liczba linii `import` znacząco spadła (policz `import` przed/po).
 - Importy spoza `java.base` (np. `com.sun.net.httpserver` w serwerze) nadal jawnie obecne.
 - `import module java.base;` kompiluje się **bez** `--enable-preview` — to JDK 26 (final),
-  a nie feature preview (jedyny „preview" w projekcie to `StructuredTaskScope` w
+  a nie feature preview (jedyny „preview” w projekcie to `StructuredTaskScope` w
   `SimulationContext`, skopiowany z kroku 10).
 
 ## Wskazówki

@@ -1,10 +1,10 @@
 # Step 07 — JEP 444 — Virtual Threads
 
-> **JDK 21 (final)** · Równoległe „radary" — wiele lekkich scenariuszy naraz.
+> **JDK 21 (final)** · Równoległe „radary” — wiele lekkich scenariuszy naraz.
 
 ## Cel ćwiczenia
 Poznasz **Virtual Threads** (JEP 444): `Thread.ofVirtual()` oraz wirtualny executor. W Flight
-Control to przetwarzanie wielu samolotów „na raz" — każde zadanie to osobny, tani wątek
+Control to przetwarzanie wielu samolotów „na raz” — każde zadanie to osobny, tani wątek
 wirtualny, więc możesz skalować bez kosztu wątków platformowych. Nauczysz się bezpiecznie
 **agregować wyniki** (atomowy licznik w mapie concurrent) i czekać na wszystkie (`join`).
 
@@ -42,11 +42,11 @@ scenario:
   `step07.domain` ma **100% pokrycia linii**.
 
 ## Wskazówki
-- Wirtualne wątki nie dodają kosztu `1:1` z OS — możesz ich mieć setki/tysiące; to jest sens.
+- Wirtualne wątki nie dodają kosztu `1:1` z OS — możesz ich mieć setki/tysiące; o to w tym chodzi.
 - **Współdzielony stan:** nie używaj zwykłego `int`/`ArrayList` z wielu wątków — `AtomicInteger`,
   `ConcurrentHashMap` lub zbieraj wyniki po `join`.
 - `Thread.ofVirtual().start(task)` zwraca `Thread` z `join()`; wirtualny executor ma `close()`
   (od JDK 21) — zatrzymuje się sam po zakończeniu zadań.
 - **Kolejność nie jest gwarantowana** — agreguj liczniki, nie polegaj na kolejności ukończenia.
-- **Do przemyślenia:** dlaczego przy setkach zadań na wirtualnych wątkach aplikacja nie „pada",
+- **Do przemyślenia:** dlaczego przy setkach zadań na wirtualnych wątkach aplikacja nie „pada”,
   a przy platformowych — tak? (limit wątków OS / koszt przełączenia kontekstu)

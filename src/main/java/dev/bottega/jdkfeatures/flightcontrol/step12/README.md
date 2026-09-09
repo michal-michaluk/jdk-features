@@ -11,8 +11,8 @@ typu samolotu) i **clamp** — zanim obiekt powstanie.
 
 ## Co zrobić
 1. W konstruktorze (`SpeedLimit`, a nie `record`) **zweryfikuj dane przed** `super(...)`:
-   `requireNonNull` labela, zakres (label nie może być blank), limit prędkości >= 0.
-2. **Wylicz** pochodną wartość przed `super`: skwantowany/klamowany limit
+   `requireNonNull(label)`, zakres (label nie może być pusty/blank), limit prędkości >= 0.
+2. **Wylicz** pochodną wartość przed `super`: przycięty do zakresu (clamp) limit
    (`effectiveMax`) oraz znormalizowany label (`trim().toUpperCase()`).
 3. **Clamp** wartość do dozwolonego zakresu: ujemna wartość → `0`, powyżej
    `ABSOLUTE_MAX` → `ABSOLUTE_MAX`.
@@ -47,4 +47,4 @@ delegating: {label: "CTR"}                              # -> this(label, 0.0) ->
 - JEP 513 nadal **nie pozwala** czytać `this` (pól/metod instancji) przed `super`/`this` —
   tylko operacje na lokalnych/parametrach i wywołania statyczne są legalne.
 - **Do przemyślenia:** dlaczego bezpieczniej jest odrzucić `label: null` od razu, niż
-  wpuścić obiekt „prawie-pusty" i łapać gdzieś później?
+  wpuścić obiekt „prawie-pusty” i łapać gdzieś później?

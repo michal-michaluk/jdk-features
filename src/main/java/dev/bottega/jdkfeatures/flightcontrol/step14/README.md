@@ -31,7 +31,7 @@ roundtrip:
 - PEM zaczyna się od `-----BEGIN PRIVATE KEY-----` / `-----BEGIN PUBLIC KEY-----`
   i kończy odpowiednim `-----END ...-----`.
 - Generacja klucza działa (`generate(keySize)`), metoda `roundTrips()` zwraca `true`.
-- `KeyMaterial` jest niemutowalne: `privateKey()`, `publicKey()`, `equals`/`hashCode`.
+- `KeyMaterial` jest niezmienny: `privateKey()`, `publicKey()`, `equals`/`hashCode`.
 - (ciągłość) testy domeny i kontrakt serwera z kroku 13 nadal przechodzą; pakiet
   `step14.domain` ma **100% pokrycia linii**.
 

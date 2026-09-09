@@ -16,7 +16,7 @@ klasyfikuje `ThreatClassifier`, co zwraca `Radar.report()` i na czym polega niez
    oraz (skopiowane z kroku 07) `Radar`/`RadarReport`/`Category`/`ThreatClassifier`.
 2. Opisz **zachowanie**, nie implementację:
    - `step()` przesuwa każdy samolot o `vel` i zwraca **nowy**, niezmienny stan;
-   - `describe()` to wyczerpujący `switch` po zapieczętowanym `Area` z **record patterns**;
+   - `describe()` to wyczerpujący `switch` po sealed `Area` z **record patterns**;
    - `ThreatClassifier.classify()` → `ALARM`/`SECTOR`/`NORMAL`/`UNKNOWN` (guards + `case null`);
    - `Radar.report()` — wątki wirtualne, agregacja per `Category`, deterministyczny niezmienny raport.
 3. Utrwal w Javadoc **kontrakt niezmienności** (defensywne `List.copyOf`, świeże widoki,
@@ -50,8 +50,8 @@ documentation:
 - `/** … */` (wieloliniowy) vs `///` (liniowy) — JEP 467 obsługuje oba; wybierz spójnie.
 - W Markdown Javadoc nie musisz używać `{@literal}`/`{@code}`/`<pre>` — wystarczą `` `code` ``.
 - Opisuj **kontrakt** (co gwarantuje metoda), a nie szczegóły implementacji.
-- **pomocnik:** `./gradlew javadoc` dla całego projektu może się nie zbudować, bo demo
+- **Pomocnik:** `./gradlew javadoc` dla całego projektu może się nie zbudować, bo demo
   preview/incubator (FFM, Vector) wymagają flag JVM nieustawionych dla zadania `javadoc`;
   dokumentację konkretnego kroku obejrzysz po `./gradlew classes` w narzędziu IDE.
-- **Do przemyślenia:** jakie założenia domenowe (immutability, wyczerpalność `Area`) warto
+- **Do przemyślenia:** jakie założenia domenowe (immutability, wyczerpywalność `Area`) warto
   utrwalić w Javadoc, by współpracownik ich nie złamał?

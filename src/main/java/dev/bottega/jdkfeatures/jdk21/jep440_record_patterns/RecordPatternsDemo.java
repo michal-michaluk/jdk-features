@@ -1,6 +1,7 @@
 package dev.bottega.jdkfeatures.jdk21.jep440_record_patterns;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * JEP 440 — Record Patterns (JDK 21).
@@ -76,6 +77,7 @@ public final class RecordPatternsDemo {
         double sum = 0;
         for (Shape s : shapes) {
             sum += switch (s) {
+                case Circle(Point(int x, int y), int radius) when radius < 0 -> 0;
                 case Circle(Point(int x, int y), int radius) -> Math.PI * radius * radius;
                 case Rectangle(Point(int x, int y), int width, int height) -> width * height;
             };

@@ -10,12 +10,14 @@ public final class RandomMovement {
     private final double maxSpeedDelta;
     private final String algorithm;
     private final long seed;
+    private final RandomGenerator rng;
 
-    RandomMovement(double maxTurnDeg, double maxSpeedDelta, String algorithm, long seed) {
+    RandomMovement(double maxTurnDeg, double maxSpeedDelta, String algorithm, long seed, RandomGenerator rng) {
         this.maxTurnDeg = maxTurnDeg;
         this.maxSpeedDelta = maxSpeedDelta;
         this.algorithm = algorithm;
         this.seed = seed;
+        this.rng = rng;
     }
 
     public double maxTurnDeg() {
@@ -26,11 +28,7 @@ public final class RandomMovement {
         return maxSpeedDelta;
     }
 
-    public RandomGenerator generator() {
-        return RandomGeneratorFactory.of(algorithm).create(seed);
-    }
-
-    public Velocity apply(Velocity current, RandomGenerator rng) {
+    public Velocity apply(Velocity current) {
         double speed = Math.hypot(current.dx(), current.dy());
         double heading = Math.atan2(current.dy(), current.dx());
         double turnDeg = (rng.nextDouble() - 0.5) * 2 * maxTurnDeg;

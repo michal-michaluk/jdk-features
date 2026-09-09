@@ -1,5 +1,7 @@
 package dev.bottega.jdkfeatures.flightcontrol.step03.domain;
 
+import java.util.random.RandomGeneratorFactory;
+
 public final class RandomMovementFactory {
 
     private static final String ALGORITHM = "L64X128MixRandom";
@@ -15,6 +17,7 @@ public final class RandomMovementFactory {
     }
 
     public static RandomMovement of(double maxTurnDeg, double maxSpeedDelta) {
-        return new RandomMovement(maxTurnDeg, maxSpeedDelta, ALGORITHM, SEED);
+        return new RandomMovement(maxTurnDeg, maxSpeedDelta, ALGORITHM, SEED,
+                RandomGeneratorFactory.of(ALGORITHM).create(SEED));
     }
 }

@@ -1,6 +1,7 @@
 package dev.bottega.jdkfeatures.jdk24.jep485_stream_gatherers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Gatherers;
 import java.util.stream.IntStream;
 
@@ -33,7 +34,7 @@ public final class StreamGatherersDemo {
      */
     public static List<List<Integer>> windowFixed(int windowSize, List<Integer> source) {
         return source.stream()
-                .gather(Gatherers.windowFixed(windowSize))
+                .gather(Gatherers.windowSliding(windowSize))
                 .toList();
     }
 

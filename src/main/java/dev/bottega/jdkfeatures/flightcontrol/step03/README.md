@@ -22,7 +22,7 @@ nie modyfikuje stanu, tylko go odczytuje i (w `/tick`) przesuwa o jeden krok.
 
 ## Cel ćwiczenia
 Poznasz **Simple Web Server** (JEP 408): `com.sun.net.httpserver.HttpServer` do szybkiego
-wystawienia REST bez zewnętrznego frameworka. W Flight Control to etap „radarowa tablica" —
+wystawienia REST bez zewnętrznego frameworka. W Flight Control to etap „radarowa tablica” —
 masz stan w pamięci i chcesz go zobaczyć. **Statyczny widok SVG** (czerwone punkty =
 samoloty, szare = obszary) renderuje się w przeglądarce; na tym etapie wystarczy
 **odświeżenie strony** pokazujące aktualny stan.
@@ -60,10 +60,10 @@ Uwaga do kontraktu: pole `props` obszarów występuje w kontrakcie, ale na tym e
 - `GET /` → odpowiedź zawiera `<svg` oraz `Flight Control`.
 - Serwer startuje z portu `0` (dynamiczny) i `port()` zwraca faktyczny port > 0.
 - **Testy domeny** (osobno, bez serwera): `describe` dla koła i wielokąta, `step`
-  (ruch + niezmienność), `sample`, defensywne kopie list, `withPosition`, accessory, `equals`.
+  (ruch + niezmienność), `sample`, defensywne kopie list, `withPosition`, akcesory, `equals`.
 
 ## Wskazówki
-- **Domena czyściutka:** nie da się „przypadkiem" podpiąć HTTP do modelu, bo pakiet domeny
+- **Domena czyściutka:** nie da się „przypadkiem” podpiąć HTTP do modelu, bo pakiet domeny
   nie może importować klas sieciowych. Trzymaj się tego — to celowo daje czytelny podział.
 - **Nie blokuj wątku:** `HttpServer.start()` jest asynchroniczny; trzymaj referencję do
   `server`, by móc go zatrzymać (`stop(0)`).
@@ -73,4 +73,3 @@ Uwaga do kontraktu: pole `props` obszarów występuje w kontrakcie, ale na tym e
   (krok 13) — nie zmieniaj nazw pól.
 - **Widok SVG jest dany** — nie musisz go pisać; twoje jest serwowanie i zadbanie, by
   kontrakt zgadzał się z tym, co czyta `index.html` (label→nazwa, pos→współrzędne).
-- 

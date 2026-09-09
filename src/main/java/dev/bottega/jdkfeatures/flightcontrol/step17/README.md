@@ -1,13 +1,13 @@
 # Step 17 — JEP 530 — Primitive Type Patterns in `switch` (preview)
 
-> **JDK 26 (preview)** · Klasyfikacja prędkości `switch`em po **wzorach prymitywnych**
+> **JDK 26 (preview)** · Klasyfikacja prędkości `switch` po **wzorach prymitywnych**
 > (`case int`/`case long`/`case double`) z `when`.
 
 ## Cel ćwiczenia
 Poznasz **Primitive Types in Patterns** (JEP 530): dopasowujesz **prymitywne** typy w
 `switch`/`instanceof`. W Flight Control klasyfikujesz **prędkość** samolotu
 (`SLOW`/`CRUISE`/`FAST`) — a że selektorem jest `Number`, każdy wzorzec prymitywny łapie
-dokładnie swój „boxed" typ (`Integer` → `case int`, `Long` → `case long`, `Double` →
+dokładnie swój „boxed” typ (`Integer` → `case int`, `Long` → `case long`, `Double` →
 `case double`), a obcy `Number` (np. `Float`) i `null` idą do `default`/`case null`.
 
 ## Co zrobić
@@ -16,7 +16,7 @@ dokładnie swój „boxed" typ (`Integer` → `case int`, `Long` → `case long`
 2. Dodaj `case null` i `default` (→ `UNKNOWN`).
 3. Przetestuj **wszystkie** gałęzie: int/long/double, granice (`150`, `300`), `null`,
    oraz `Number` innego typu (`Float` → `default`).
-4. Opcjonalnie wywołaj z domeny: `classify(aircraft)` liczy prędkość i bucketuje.
+4. Opcjonalnie wywołaj z domeny: `classify(aircraft)` liczy prędkość i przydziela do bucket (`SLOW`/`CRUISE`/`FAST`).
 
 ## Dane testowe (YAML)
 ```yaml
@@ -40,7 +40,7 @@ unknown: [null, 50f, BigDecimal("50")]  # case null / default
 - `switch` nie może mieć selektora `double` — **dlatego** wzorzec prymitywny działa na
   `Number` (boxed) i dopasowuje dokładny typ (`case double` ↔ `Double`).
 - Ustaw `case null`/`default` na końcu; wzorce prymitywne dopasowują **dokładny** typ
-  boxed, więc `default` łapie `Float`/`BigDecimal`/oboje.
+  boxed, więc `default` łapie `Float` i `BigDecimal` (oba).
 - **Kolejność ma znaczenie** przy konwersjach rozszerzających — tu trzymamy wzorce
   `int` → `long` → `double` i osobne progi `when`, żeby wyniki były jednoznaczne.
 - **Do przemyślenia:** co dają wzorce prymitywne zamiast ręcznego `if-else` na

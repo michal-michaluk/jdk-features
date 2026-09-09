@@ -89,7 +89,6 @@ class AirspaceDomainTest {
         assertEquals(m1.hashCode(), m2.hashCode());
         assertEquals(5, m1.maxTurnDeg());
         assertEquals(2, m1.maxSpeedDelta());
-        assertEquals(m1.generator().nextDouble(), m2.generator().nextDouble());
         assertTrue(m1.equals(m1));
         assertFalse(m1.equals(null));
         assertFalse(m1.equals("x"));

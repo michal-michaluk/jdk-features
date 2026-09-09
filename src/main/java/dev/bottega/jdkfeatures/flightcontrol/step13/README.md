@@ -18,7 +18,7 @@ QUIC wymaga serwera HTTP/3).
    (typ `Optional<HttpClient.Version>` — **obecny**).
 5. Obsłuż **uczciwy fallback**: serwer JEP 408 to HTTP/1.1 (brak punktu QUIC), więc realny
    transport to `HTTP/1.1`; deklaracja klienta/żądania pozostaje `HTTP_3` — w teście nie
-   twardo wywalaj na `HTTP/1.1`.
+   zgłaszaj twardego błędu przy `HTTP/1.1`.
 
 ## Dane testowe (YAML)
 ```yaml

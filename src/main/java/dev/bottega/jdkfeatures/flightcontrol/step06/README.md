@@ -1,12 +1,12 @@
 # Step 06 — JEP 441 — Pattern Matching for switch
 
-> **JDK 21 (final)** · Klasyfikujesz samoloty „alarm / sektor / normal" przez `switch`.
+> **JDK 21 (final)** · Klasyfikujesz samoloty „alarm / sektor / normal” przez `switch`.
 
 ## Cel ćwiczenia
 Poznasz **Pattern Matching for switch** (JEP 441): `switch` jako **wyrażenie** z **type
 patterns** i strażnikami `when` + obsługa `case null`. W Flight Control to klasyfikacja
 zagrożenia: samolot dostaje kategorię na podstawie prędkości i tego, czy leci w sektorze.
-Logika „co z tym zrobić" jest czytelna i **wyczerpująca** (finalny typ `Aircraft` + `null`).
+Logika „co z tym zrobić” jest czytelna i **wyczerpująca** (finalny typ `Aircraft` + `null`).
 
 ## Co zrobić
 1. Zdefiniuj **kategorie** (`Category`): `ALARM`, `SECTOR`, `NORMAL`, `UNKNOWN`.
@@ -44,9 +44,9 @@ expect: speed(HOT)=20, speed(COOL)=5, speed(AWAY)=~1.41
 
 ## Wskazówki
 - Strażnik `when` pozwala warunkować dopasowanie bez twardego zagnieżdżania `if`.
-- `case null` **wymusza** jawną obsługę `null` w przełączaniu (JEP 441) — nie musisz pisać
+- `case null` **wymusza** jawną obsługę `null` w `switch` (JEP 441) — nie musisz pisać
   osobnego `if (aircraft == null)`.
-- „W sektorze": odległość od środka koła `<= radius` — policz `Math.hypot(dx, dy)`.
+- „W sektorze”: odległość od środka koła `<= radius` — policz `Math.hypot(dx, dy)`.
 - Kolejność `case` ma znaczenie — szerszy wzorzec (`Aircraft`) umieść **po** węższych
   z `when`, inaczej wcześniejszy złapie wszystko.
 - `switch` jako **wyrażenie** zwraca wartość (przypisujesz wynik, nie `return`).

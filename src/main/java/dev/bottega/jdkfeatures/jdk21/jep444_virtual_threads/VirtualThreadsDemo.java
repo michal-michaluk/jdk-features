@@ -1,8 +1,10 @@
 package dev.bottega.jdkfeatures.jdk21.jep444_virtual_threads;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 /**
  * JEP 444 — Virtual Threads (JDK 21).

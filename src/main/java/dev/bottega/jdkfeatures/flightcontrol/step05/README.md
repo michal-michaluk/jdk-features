@@ -6,7 +6,7 @@
 Poznasz **Record Patterns** (JEP 440): dopasowanie do **komponentów rekordu** w
 `instanceof`/`switch`. Zamiast rzutować i wołać akcesory, rozpakowujesz od razu
 `Circle(center, radius, label, props)` i `Polygon(vertices, label, props)`. To czystsza
-i bezpieczniejsza (pusty `null`/zły typ ⇒ brak dopasowania) destrukturyzacja modelu.
+i bezpieczniejsza (przy `null` lub złym typie ⇒ brak dopasowania) destrukturyzacja modelu.
 
 ## Co zrobić
 1. Przepisz `describe(Area)` z kroku 04 na **record pattern** w `switch`:
